@@ -3,15 +3,14 @@
 $title = "Login to Your Account";
 require_once "validations/login.validation.php";
 include_once "templates/header.php";
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
 
 ?>
 <main>
-  <section class="bg-gray-300 ">
+  <section class="bg-gray-300">
     <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
       <a href="#" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 ">
-        <img class="w-24 h-24 mr-2" src="images/logo.jpg" alt="JJ&c logo">
+        <img class="w-24 h-24 mr-2 rounded-full" src="images/logo.jpg" alt="JJ&c logo">
         JJ&C Stainless Steel Fabrication Services
       </a>
       <div class="w-full bg-white rounded-lg shadow  md:mt-0 sm:max-w-md xl:p-0 ">
@@ -20,7 +19,6 @@ ini_set('display_errors', 1);
             Sign in to your account
           </h1>
           <?php
-          session_start();
           if (isset($_SESSION['login_errors']) && !empty($_SESSION['login_errors'])): ?>
             <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
               <ul class="mt-2 list-disc list-inside">
@@ -31,6 +29,7 @@ ini_set('display_errors', 1);
             </div>
           <?php
             unset($_SESSION['login_errors']); 
+            session_destroy();
           endif;
           ?>
           <form class="space-y-4 md:space-y-6" method="POST" action="logics/login.process.php">
@@ -55,6 +54,7 @@ ini_set('display_errors', 1);
         </div>
       </div>
     </div>
+  </section>
 </main>
 </body>
 <?php include_once "templates/closing.php"; ?>
