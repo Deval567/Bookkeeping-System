@@ -1,5 +1,5 @@
 <?php
-$title = "Users";
+$title = "Users Management";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
