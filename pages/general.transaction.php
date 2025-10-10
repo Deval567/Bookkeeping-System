@@ -1,8 +1,9 @@
 <?php
-$title = "Dashboard";
+$title = "General Transactions";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
+
 ?>
 <main class="g-gray-100 p-6">
   <h2 class="text-2xl font-semibold"><?php echo $title ?></h2>

@@ -4,13 +4,13 @@
    <!-- User Info -->
    <div class="px-6 py-3 flex items-center justify-between border-b">
      <div>
-       <p class="text-md opacity-80">Logged in as: <span class="font-semibold"><?php echo $_SESSION['username'];?></span></p>
-       <p class="text-md">Role: <span class="font-semibold"><?php echo $_SESSION['role'];?></p>
+       <p class="text-md opacity-80">Logged in as: <span class="font-semibold"><?php echo $_SESSION['username']; ?></span></p>
+       <p class="text-md">Role: <span class="font-semibold"><?php echo $_SESSION['role']; ?></p>
      </div>
      <span class="text-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-</svg>
-</span>
+         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+       </svg>
+     </span>
    </div>
 
    <!-- Menu -->
@@ -41,8 +41,8 @@
          </div>
          <ul class="ml-8 mt-2 space-y-1 text-sm">
            <li>
-             <a href="all.transaction.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'All Transactions')
+             <a href="general.transaction.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'General Transactions')
                 ? 'bg-purple-50 text-purple-700 font-semibold'
                 : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
                <span>
@@ -50,7 +50,7 @@
                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                  </svg>
                </span>
-               All Transactions
+               General
              </a>
            </li>
            <li>
@@ -93,6 +93,24 @@
              </a>
            </li>
          </ul>
+       </li>
+
+       <!-- Reports -->
+
+
+       <!-- Users -->
+       <li>
+         <a href="users.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+    <?php echo ($title == 'Users')
+      ? 'bg-purple-50 text-purple-700 font-semibold'
+      : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
+           <span>
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+             </svg>
+           </span>
+           Users
+         </a>
        </li>
 
      </ul>
