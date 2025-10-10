@@ -6,13 +6,21 @@ class Users
     public $password;
     public $role;
     protected $conn;
+    public $id;
 
-    public function __construct($conn, $username, $password, $role)
+    public function __construct($conn, $id, $username, $password, $role)
     {
         $this->conn = $conn;
+        $this->id = $id;
         $this->username = $username;
         $this->password = $password;
         $this->role = $role;
+    }
+    public function showAllUsers()
+    {
+        $sql = "SELECT * FROM users";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function isUserExists()
@@ -35,19 +43,39 @@ class Users
             return false;
         }
     }
-    public function createUser()
+    public function createUser($username, $password, $role)
     {
-        $exists = $this->isUserExists();
-        if ($exists) {
-            $_SESSION['user_errors'] = ["User already exists."];
-        } else {
+        
             $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-            $stmt = mysqli_stmt_init($this->conn);  if (!mysqli_stmt_prepare($stmt, $sql)) {
+            $stmt = mysqli_stmt_init($this->conn);
+            if (!mysqli_stmt_prepare($stmt, $sql)) {
                 return false;
             }
 
-            mysqli_stmt_bind_param($stmt, "sss", $this->username, $this->password, $this->role);
+            mysqli_stmt_bind_param($stmt, "sss",$username, $password, $role);
             return mysqli_stmt_execute($stmt);
+        
+    }
+    public function deleteUser($id)
+    {
+        $sql = "DELETE FROM users WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
         }
+
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        return mysqli_stmt_execute($stmt);
+    }
+    public function updateUser($id,$conn ,$username, $password, $role)
+    {
+        $sql = "UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?";
+        $stmt = mysqli_stmt_init($conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "sssi", $username, $password, $role, $id);
+        return mysqli_stmt_execute($stmt);
     }
 }
