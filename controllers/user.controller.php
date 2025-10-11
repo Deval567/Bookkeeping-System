@@ -71,6 +71,13 @@ switch ($action) {
         break;
 
     case "update_user":
+         $errors = $validator->validate($username, $password, $roles);
+        if (!empty($errors)) {
+            $_SESSION['user_errors'] = $errors;
+            header("Location: ../pages/users.php");
+            exit;
+        }else
+        {
         $existingUser = $user->isUserExists();
 
         if ($existingUser && $existingUser['id'] != $id) {
@@ -91,4 +98,7 @@ switch ($action) {
             exit;
         }
         break;
-}
+        }
+    }
+        
+

@@ -27,7 +27,7 @@ if (!empty($errors)) {
     exit;
 } else {
 
-    $user = new Users($conn, $username, $password, $roles);
+    $user = new Users($conn,"", $username, $password, $roles);
     $user = $user->isUserExists();
 
     if (!$user) {

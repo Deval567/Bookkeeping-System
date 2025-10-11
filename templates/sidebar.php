@@ -5,9 +5,18 @@
    <div class="px-6 py-3 flex items-center justify-between border-b">
      <div>
        <p class="text-md opacity-80">Logged in as: <span class="font-semibold"><?php echo $_SESSION['username']; ?></span></p>
-       <p class="text-md">Role: <span class="font-semibold"><?php echo $_SESSION['role']; ?></p>
+       <p class="text-md">Role: <span class="font-semibold"><?php
+                        $role = htmlspecialchars($_SESSION['role']);
+                        $roleStyles = [
+                            'Admin' => 'bg-purple-100 text-purple-700',
+                            'Staff' => 'bg-blue-100 text-blue-700',
+                        ];
+                        $style = $roleStyles[$_SESSION['role']] ?? 'bg-gray-100 text-gray-700';
+                        ?>
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
+                            <?= $role ?></p>
      </div>
-     <span class="text-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-700">
+     <span class="text-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-700 ">
          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
        </svg>
      </span>
@@ -16,6 +25,7 @@
    <!-- Menu -->
    <nav class="flex-1 overflow-y-auto px-4 py-6 text-gray-700">
      <ul class="space-y-4">
+
 
        <!-- Dashboard -->
        <li>
@@ -31,8 +41,47 @@
            Dashboard
          </a>
        </li>
+       <hr class="border-gray-200 mt-4">
 
-       <hr class="border-gray-200">
+        <!-- Accounting Setup -->
+      <li>
+         <div class="px-3 py-2 font-semibold text-gray-800 flex items-center gap-3 rounded-lg cursor-pointer transition-all">
+           Accounting Setup
+         </div>
+  
+
+         <ul class="ml-8 mt-2 space-y-1 text-sm">
+           <li>
+             <a href="chartsofaccounts.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Charts of Account')
+                ? 'bg-purple-50 text-purple-700 font-semibold'
+                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
+               <span>
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                 </svg>
+               </span>
+               Charts of Account
+             </a>
+           </li>
+    
+
+           <li>
+             <a href="transaction.rules.php" class="flex flex items-center gap-3 px-2 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Transaction Rules')
+                ? 'bg-purple-50 text-purple-700 font-semibold'
+                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
+               <span>
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="m9 14.25 6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                 </svg>
+               </span>
+               Transaction Rules
+             </a>
+           </li>
+         </ul>
+
+       <hr class="border-gray-200 mt-4">
 
        <!-- Transactions -->
        <li>
@@ -100,7 +149,7 @@
                Payments
              </a>
            </li>
-        <hr class="border-gray-200">
+        <hr class="border-gray-200 mt-4">
           </ul>
         </li>
 
@@ -142,25 +191,10 @@
              </a>
            </li>
          </ul>
-              <hr class="border-gray-200">
-       <!-- Users -->
-       <li>
-         <a href="users.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-    <?php echo ($title == 'Users Management')
-      ? 'bg-purple-50 text-purple-700 font-semibold'
-      : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
-           <span>
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-             </svg>
-           </span>
-           Users Management
-         </a>
-       </li>
-       <hr class="border-gray-200">
+              <hr class="border-gray-200 mt-4">
+      
 
        <!-- Reports -->
-        <!-- Records -->
 
 <li>
          <div class="px-3 py-2 font-semibold text-gray-800 flex items-center gap-3 rounded-lg cursor-pointer transition-all">
@@ -211,7 +245,22 @@
              </a>
            </li>
          </ul>
-              <hr class="border-gray-200">
+              <hr class="border-gray-200 mt-4">
+               <!-- Users -->
+       <li>
+         <a href="users.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+    <?php echo ($title == 'Users Management')
+      ? 'bg-purple-50 text-purple-700 font-semibold'
+      : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700 font-medium'; ?>">
+           <span>
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+             </svg>
+           </span>
+           Users Management
+         </a>
+       </li>
+       <hr class="border-gray-200 mt-4">
 
      </ul>
    </nav>

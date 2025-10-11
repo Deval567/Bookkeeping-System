@@ -5,7 +5,7 @@ include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
 require_once "../configs/dbc.php";
 require_once "../models/users.class.php";
-$userModel = new Users($conn, "", "", "","");
+$userModel = new Users($conn, "", "", "", "");
 $users = $userModel->showAllUsers();
 ?>
 <main class="g-gray-100 p-6">
@@ -14,18 +14,20 @@ $users = $userModel->showAllUsers();
         <p class="mt-2 text-gray-600">Manage user accounts here.</p>
     </div>
 
-      <div class="flex justify-end mb-6">
-    <button
-        command="show-modal"
-        commandfor="dialog"
-        id="openModalBtn"
-        class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transform transition duration-200 hover:-translate-y-0.5 hover:scale-105">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-        </svg>
-        <span>Add User</span>
-    </button>
-</div>
+    <div class="flex justify-end mb-6">
+        <button
+            command="show-modal"
+            commandfor="dialog"
+            id="openModalBtn"
+            class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transform transition duration-200 hover:-translate-y-0.5 hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+            </svg>
+            <span>Add User</span>
+        </button>
+    </div>
+
+    <!-- Success and Error Messages -->
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
             <div class="flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3 shadow-lg">
@@ -77,47 +79,59 @@ $users = $userModel->showAllUsers();
         unset($_SESSION['user_errors']);
     endif;
     ?>
-    <table class="min-w-full border-collapse">
+
+    <!-- Users Table -->
+    <div class=" rounded-lg shadow">
+   <table class="min-w-full bg-white">
         <thead>
-            <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                <th class="py-3 px-6 text-left">Username</th>
-                <th class="py-3 px-6 text-left">Password</th>
-                <th class="py-3 px-6 text-left">Role</th>
-                <th class="py-3 px-6 text-center">Actions</th>
+            <tr class="bg-red-700 text-white">
+                <th class="py-4 px-6 text-left text-sm font-medium">Username</th>
+                <th class="py-4 px-6 text-left text-sm font-medium">Password</th>
+                <th class="py-4 px-6 text-left text-sm font-medium">Role</th>
+                <th class="py-4 px-6 text-center text-sm font-medium">Actions</th>
             </tr>
         </thead>
 
-        <tbody class="text-gray-700 text-sm font-light">
+        <tbody class="divide-y divide-gray-200">
             <?php foreach ($users as $user): ?>
-                <tr class="border-b border-gray-200 bg-white hover:bg-gray-50 transform transition-transform duration-300 hover:scale-[1.01] hover:shadow-md">
-                    <td class="py-3 px-6 text-left">
+                <tr class="hover:bg-gray-100 hover:scale-[1.02] transition-all duration-200 hover:shadow-lg">
+                    <td class="py-4 px-6 text-gray-900 font-medium">
                         <?= htmlspecialchars($user['username']); ?>
                     </td>
-                    <td class="py-3 px-6 text-left">
+                    <td class="py-4 px-6 text-gray-600">
                         <?= htmlspecialchars($user['password']); ?>
                     </td>
-                    <td class="py-3 px-6 text-left">
-                        <?= htmlspecialchars($user['role']); ?>
+                    <td class="py-4 px-6">
+                        <?php
+                        $role = htmlspecialchars($user['role']);
+                        $roleStyles = [
+                            'Admin' => 'bg-purple-100 text-purple-700',
+                            'Staff' => 'bg-blue-100 text-blue-700',
+                        ];
+                        $style = $roleStyles[$user['role']] ?? 'bg-gray-100 text-gray-700';
+                        ?>
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
+                            <?= $role ?>
+                        </span>
                     </td>
-                    <td class="py-3 px-6 text-center">
+                    <td class="py-4 px-6">
                         <div class="flex items-center justify-center space-x-3">
-                            <button command="show-modal" commandfor="edit-dialog" class="relative group text-blue-500 hover:text-blue-700 transition-colors duration-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <button command="show-modal" commandfor="edit-dialog" class="relative group p-2 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                 </svg>
-                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     Edit
                                 </span>
                             </button>
 
-                            <button command="show-modal" commandfor="delete-dialog" class="relative group text-red-500 hover:text-red-700 transition-colors duration-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <button command="show-modal" commandfor="delete-dialog" class="relative group p-2 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                 </svg>
-                                <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     Delete
                                 </span>
-                            </button>
                             </button>
                         </div>
                     </td>
@@ -125,10 +139,11 @@ $users = $userModel->showAllUsers();
             <?php endforeach; ?>
         </tbody>
     </table>
-
+</div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+<!--Modals -->
 <el-dialog>
     <dialog id="dialog" aria-labelledby="dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
         <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
@@ -170,8 +185,8 @@ $users = $userModel->showAllUsers();
                         <select name="role"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                             <option value="">Select role</option>
-                            <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
                         </select>
                     </div>
 
@@ -237,8 +252,8 @@ $users = $userModel->showAllUsers();
                         <select name="role"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                             <option value="">Select role</option>
-                            <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
                         </select>
                     </div>
 
