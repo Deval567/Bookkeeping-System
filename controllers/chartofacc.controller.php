@@ -19,7 +19,7 @@ $description = trim($_POST['description']);
 $action = $_POST['action'];
 $errors = [];
 
-$chartofacc = new ChartOfAcc($conn, $id, $account_name, $account_type, $description);
+$chartofacc = new ChartofAccounts($conn, $id, $account_name, $account_type, $description);
 $validator = new ChartofAccountValidation();
 
 switch ($action) {

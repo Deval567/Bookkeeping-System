@@ -1,6 +1,6 @@
 <?php
 
-class chartofacc
+class ChartofAccounts
 {
     private $conn;
     private $id;
@@ -18,30 +18,78 @@ class chartofacc
         $this->description = $description;
     }
 
-    public function getTotalCharts()
+    public function getTotalCharts($search = '', $filter = '')
     {
-        $sql = "SELECT COUNT(*) AS total FROM chart_of_accounts";
+        $search = trim($search);
+        $filterQuery = '';
+
+        if ($search !== '' || $filter !== '') {
+            $conditions = [];
+
+            if ($search !== '') {
+                $search = mysqli_real_escape_string($this->conn, $search);
+                $conditions[] = "(account_name LIKE '%$search%' 
+                              OR account_type LIKE '%$search%' 
+                              OR description LIKE '%$search%')";
+            }
+
+            if ($filter !== '') {
+                $filter = mysqli_real_escape_string($this->conn, $filter);
+                $conditions[] = "account_type = '$filter'";
+            }
+
+            $filterQuery = "WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql = "SELECT COUNT(*) AS total FROM chart_of_accounts $filterQuery";
         $result = mysqli_query($this->conn, $sql);
         $row = mysqli_fetch_assoc($result);
-        return $row['total'];
+
+        return (int)$row['total'];
     }
 
-    public function getPaginatedCharts($page = 1)
+    public function getPaginatedCharts($page = 1, $search = '', $filter = '')
     {
-        if ($page < 1) $page = 1;
-
+        $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
-        $sql = "SELECT * FROM chart_of_accounts ORDER BY account_type ASC LIMIT {$this->limit} OFFSET {$offset} ";
+
+        $search = trim($search);
+        $filterQuery = '';
+
+        if ($search !== '' || $filter !== '') {
+            $conditions = [];
+
+            if ($search !== '') {
+                $search = mysqli_real_escape_string($this->conn, $search);
+                $conditions[] = "(account_name LIKE '%$search%' 
+                              OR account_type LIKE '%$search%' 
+                              OR description LIKE '%$search%')";
+            }
+
+            if ($filter !== '') {
+                $filter = mysqli_real_escape_string($this->conn, $filter);
+                $conditions[] = "account_type = '$filter'";
+            }
+
+            $filterQuery = "WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql = "
+        SELECT * 
+        FROM chart_of_accounts 
+        $filterQuery
+        ORDER BY account_type ASC 
+        LIMIT {$this->limit} OFFSET {$offset}";
+
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalPages()
+    public function getTotalPages($search = '', $filter = '')
     {
-        $total = $this->getTotalCharts();
-        return ceil($total / $this->limit);
+        return ceil($this->getTotalCharts($search, $filter) / $this->limit);
     }
-    
+
     public function isAccountExists()
     {
         $sql = "SELECT * FROM chart_of_accounts WHERE account_name = ?";
@@ -55,6 +103,8 @@ class chartofacc
         mysqli_stmt_bind_param($stmt, "s", $this->account_name);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
+
+
 
         if ($row = mysqli_fetch_assoc($result)) {
             return $row; // return the user row if found
@@ -90,6 +140,4 @@ class chartofacc
         mysqli_stmt_bind_param($stmt, "i", $id);
         return mysqli_stmt_execute($stmt);
     }
-
-
 }
