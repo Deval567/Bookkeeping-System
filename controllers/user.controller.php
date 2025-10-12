@@ -76,8 +76,7 @@ switch ($action) {
             $_SESSION['user_errors'] = $errors;
             header("Location: ../pages/users.php");
             exit;
-        }else
-        {
+        }else{
         $existingUser = $user->isUserExists();
 
         if ($existingUser && $existingUser['id'] != $id) {

@@ -7,6 +7,7 @@ class Users
     public $role;
     protected $conn;
     public $id;
+    private $limit = 10;
 
     public function __construct($conn, $id, $username, $password, $role)
     {
@@ -16,11 +17,28 @@ class Users
         $this->password = $password;
         $this->role = $role;
     }
-    public function showAllUsers()
+ 
+    public function getTotalUsers()
     {
-        $sql = "SELECT * FROM users";
+        $sql = "SELECT COUNT(*) AS total FROM users";
+        $result = mysqli_query($this->conn, $sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'];
+    }
+    
+     public function getPaginatedUsers($page = 1)
+    {
+        if ($page < 1) $page = 1;
+
+        $offset = ($page - 1) * $this->limit;
+        $sql = "SELECT * FROM users ORDER BY username ASC LIMIT {$this->limit} OFFSET {$offset} ";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    public function getTotalPages()
+    {
+        $total = $this->getTotalUsers();
+        return ceil($total / $this->limit);
     }
 
     public function isUserExists()
