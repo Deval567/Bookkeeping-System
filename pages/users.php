@@ -7,10 +7,12 @@ require_once "../configs/dbc.php";
 require_once "../models/users.class.php";
 $userModel = new Users($conn, "", "", "", "");
 
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page   = $_GET['page'] ?? 1;
+$search = $_GET['search'] ?? '';
+$filter = $_GET['filter'] ?? '';
 
-$users = $userModel->getPaginatedUsers($page);
-$total_pages = $userModel->getTotalPages();
+$users = $userModel->getPaginatedUsers($page, $search, $filter);
+$total_pages = $userModel->getTotalPages($search, $filter);
 ?>
 <main class="g-gray-100 px-6 py-2">
     <div>
@@ -84,6 +86,60 @@ $total_pages = $userModel->getTotalPages();
     endif;
     ?>
 
+    <!-- Search and Filter Form -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+        <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <!-- Search Input -->
+            <div class="flex-1">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    <input
+                        type="text"
+                        name="search"
+                        value="<?= $_GET['search'] ?? '' ?>"
+                        placeholder="Search account name or description..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                </div>
+            </div>
+
+            <!-- Filter Dropdown -->
+            <div class="sm:w-48">
+                <select
+                    name="filter"
+                    onchange="this.form.submit()"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                    <option value="">All Types</option>
+                    <option value="Admin" <?= ($_GET['filter'] ?? '') === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                    <option value="Staff" <?= ($_GET['filter'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                </select>
+            </div>
+            <!-- Buttons -->
+            <div class="flex gap-2">
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-200 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    Search
+                </button>
+
+                <?php if (!empty($_GET['search']) || !empty($_GET['filter'])): ?>
+                    <a
+                        href="?"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 transition duration-200 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                        Clear
+                    </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+
     <!-- Users Table -->
     <div class=" rounded-lg shadow">
         <table class="min-w-full bg-white">
@@ -107,16 +163,16 @@ $total_pages = $userModel->getTotalPages();
                         </td>
                         <td class="py-2 px-4 text-gray-600">
                             <?php
-                        $role = htmlspecialchars($user['role']);
-                        $roleStyles = [
-                            'Admin' => 'bg-purple-100 text-purple-700',
-                            'Staff' => 'bg-blue-100 text-blue-700',
-                        ];
-                        $style = $roleStyles[$user['role']] ?? 'bg-gray-100 text-gray-700';
-                        ?>
-                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
-                            <?= $role ?>
-                        </span>
+                            $role = htmlspecialchars($user['role']);
+                            $roleStyles = [
+                                'Admin' => 'bg-purple-100 text-purple-700',
+                                'Staff' => 'bg-blue-100 text-blue-700',
+                            ];
+                            $style = $roleStyles[$user['role']] ?? 'bg-gray-100 text-gray-700';
+                            ?>
+                            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
+                                <?= strtoupper($role) ?>
+                            </span>
                         </td>
                         <td class="py-2 px-4">
                             <div class="flex items-center justify-center space-x-2">
@@ -139,32 +195,39 @@ $total_pages = $userModel->getTotalPages();
         </table>
     </div>
     </div>
+    <!-- Pagination Links !-->
     <div class="flex justify-center my-4 space-x-2 pb-4">
         <?php if ($page > 1): ?>
-            <a href="?page=<?= $page - 1 ?>" class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            <a href="?page=<?= $page - 1 . $queryParams ?>"
+                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                 </svg>
-
                 <span>Prev</span>
             </a>
         <?php endif; ?>
 
         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <a href="?page=<?= $i ?>"
+            <a href="?page=<?= $i . $queryParams ?>"
                 class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
                 <?= $i ?>
             </a>
         <?php endfor; ?>
 
         <?php if ($page < $total_pages): ?>
-            <a href="?page=<?= $page + 1 ?>" class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+            <a href="?page=<?= $page + 1 . $queryParams ?>"
+                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
                 <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>
             </a>
         <?php endif; ?>
+    </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>

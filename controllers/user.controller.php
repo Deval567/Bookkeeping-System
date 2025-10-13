@@ -13,10 +13,10 @@ require_once "../configs/dbc.php";
 require_once "../models/users.class.php";
 
 $id = $_POST['id'];
-$username = trim($_POST['username']);
-$password = trim($_POST['password']);
-$roles = trim($_POST['role']);
-$action = $_POST['action'];
+$username = htmlspecialchars(trim($_POST['username']));
+$password = htmlspecialchars(trim($_POST['password']));
+$roles = htmlspecialchars(trim($_POST['role']));
+$action = htmlspecialchars(trim($_POST['action']));
 $errors = [];
 
 

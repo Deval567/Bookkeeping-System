@@ -17,6 +17,11 @@ class ChartofAccounts
         $this->account_type = $account_type;
         $this->description = $description;
     }
+    public function getAllChart(){
+        $sql = "SELECT * FROM chart_of_accounts ORDER BY account_type ASC";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
 
     public function getTotalCharts($search = '', $filter = '')
     {

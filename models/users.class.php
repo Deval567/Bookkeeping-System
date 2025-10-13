@@ -17,29 +17,77 @@ class Users
         $this->password = $password;
         $this->role = $role;
     }
- 
-    public function getTotalUsers()
+    public function getTotalUsers($search = '', $filter = '')
     {
-        $sql = "SELECT COUNT(*) AS total FROM users";
+        $search = trim($search);
+        $filterQuery = '';
+
+        if ($search !== '' || $filter !== '') {
+            $conditions = [];
+
+            if ($search !== '') {
+                $search = mysqli_real_escape_string($this->conn, $search);
+                $conditions[] = "(username LIKE '%$search%' 
+                              OR role LIKE '%$search%')";
+            }
+
+            if ($filter !== '') {
+                $filter = mysqli_real_escape_string($this->conn, $filter);
+                $conditions[] = "role = '$filter'";
+            }
+
+            $filterQuery = "WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql = "SELECT COUNT(*) AS total FROM users $filterQuery";
         $result = mysqli_query($this->conn, $sql);
         $row = mysqli_fetch_assoc($result);
-        return $row['total'];
-    }
-    
-     public function getPaginatedUsers($page = 1)
-    {
-        if ($page < 1) $page = 1;
 
+        return (int)$row['total'];
+    }
+
+    public function getPaginatedUsers($page = 1, $search = '', $filter = '')
+    {
+        $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
-        $sql = "SELECT * FROM users ORDER BY username ASC LIMIT {$this->limit} OFFSET {$offset} ";
+
+        $search = trim($search);
+        $filterQuery = '';
+
+        if ($search !== '' || $filter !== '') {
+            $conditions = [];
+
+            if ($search !== '') {
+                $search = mysqli_real_escape_string($this->conn, $search);
+                $conditions[] = "(username LIKE '%$search%' 
+                              OR role LIKE '%$search%')";
+            }
+
+            if ($filter !== '') {
+                $filter = mysqli_real_escape_string($this->conn, $filter);
+                $conditions[] = "role = '$filter'";
+            }
+
+            $filterQuery = "WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql = "
+        SELECT * 
+        FROM users 
+        $filterQuery
+        ORDER BY role ASC 
+        LIMIT {$this->limit} OFFSET {$offset}";
+
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
-    public function getTotalPages()
+
+    public function getTotalPages($search = '', $filter = '')
     {
-        $total = $this->getTotalUsers();
-        return ceil($total / $this->limit);
+        return ceil($this->getTotalUsers($search, $filter) / $this->limit);
     }
+ 
+    
 
     public function isUserExists()
     {

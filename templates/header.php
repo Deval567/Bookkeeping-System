@@ -14,7 +14,7 @@
     ini_set('display_errors', 1);
     $currentFile = basename($_SERVER['PHP_SELF']);
     if ($currentFile != "index.php") {
-        $layout = "h-screen grid grid-cols-[250px_1fr] grid-rows-[auto_1fr]";
+        $layout = "h-full grid grid-cols-[250px_1fr] grid-rows-[auto_1fr]";
     } else {
         $layout = "h-full bg-gray-100";
     }

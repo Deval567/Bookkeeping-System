@@ -13,10 +13,10 @@ require_once "../configs/dbc.php";
 require_once "../models/chartofacc.class.php";
 
 $id = $_POST['id'];
-$account_name = trim($_POST['acc_name']);
-$account_type = trim($_POST['acc_type']);
-$description = trim($_POST['description']);
-$action = $_POST['action'];
+$account_name = htmlspecialchars(trim($_POST['acc_name']));
+$account_type = htmlspecialchars(trim($_POST['acc_type']));
+$description = htmlspecialchars(trim($_POST['description']));
+$action = htmlspecialchars(trim($_POST['action']));
 $errors = [];
 
 $chartofacc = new ChartofAccounts($conn, $id, $account_name, $account_type, $description);
@@ -81,7 +81,7 @@ switch ($action) {
         }
         break;
 
-        case "delete_account":
+    case "delete_account":
         $deleted = $chartofacc->deleteAccount($id);
         if ($deleted) {
             $_SESSION['success_message'] = "Account deleted successfully.";

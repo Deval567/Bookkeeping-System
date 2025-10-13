@@ -10,7 +10,6 @@ $chartofacc = new ChartofAccounts($conn, null, null, null, null);
 $page   = $_GET['page'] ?? 1;
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
-$queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($filter);
 
 $charts = $chartofacc->getPaginatedCharts($page, $search, $filter);
 $total_pages = $chartofacc->getTotalPages($search, $filter);
@@ -46,7 +45,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                 </div>
                 <div class="flex-1">
                     <p class="text-sm font-medium text-green-800">
-                        <?php echo htmlspecialchars($_SESSION['success_message']); ?>
+                        <?php echo ($_SESSION['success_message']); ?>
                     </p>
                 </div>
                 <button onclick="this.parentElement.parentElement.remove()" class="text-green-600 hover:text-green-800">
@@ -72,7 +71,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                 <div class="flex-1">
                     <?php foreach ($_SESSION['chartofacc_errors'] as $error): ?>
                         <p class="text-sm font-medium text-red-800">
-                            <?php echo htmlspecialchars($error); ?>
+                            <?php echo ($error); ?>
                         </p>
                     <?php endforeach; ?>
                 </div>
@@ -99,7 +98,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                     <input
                         type="text"
                         name="search"
-                        value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+                        value="<?= $_GET['search'] ?? '' ?>"
                         placeholder="Search account name or description..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
@@ -160,13 +159,26 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                 <?php foreach ($charts as $chart): ?>
                     <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02] ">
                         <td class="py-2 px-4 text-gray-900 font-medium">
-                            <?= htmlspecialchars($chart['account_name']); ?>
+                            <?= ($chart['account_name']); ?>
+                        </td>
+                        <td class="py-2 px-4 text-gray-600 ">
+                             <?php
+                            $acc_type = $chart['account_type'];
+                            $accTypeStyle = [
+                                'Asset' => 'bg-red-100 text-red-700',
+                                'Liability' => 'bg-blue-100 text-blue-700',
+                                'Equity' => 'bg-green-100 text-green-700',
+                                'Expense' => 'bg-yellow-100 text-yellow-700',
+                                'Revenue' => 'bg-purple-100 text-purple-700',
+                            ];
+                            $style = $accTypeStyle[$chart['account_type']] ?? 'bg-gray-100 text-gray-700';
+                            ?>
+                            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
+                                <?= $acc_type ?>
+                            </span>
                         </td>
                         <td class="py-2 px-4 text-gray-600">
-                            <?= htmlspecialchars($chart['account_type']); ?>
-                        </td>
-                        <td class="py-2 px-4 text-gray-600">
-                            <?= htmlspecialchars($chart['description']); ?>
+                            <?= ($chart['description']); ?>
                         </td>
                         <td class="py-2 px-4">
                             <div class="flex items-center justify-center space-x-2">
@@ -320,12 +332,12 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
 
                     <!-- Edit Account Form -->
                     <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                        <input type="hidden" name="id" value="<?= htmlspecialchars($chart['id']) ?>">
+                        <input type="hidden" name="id" value="<?= ($chart['id']) ?>">
                         <input type="hidden" name="action" value="update_account">
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                            <input type="text" name="acc_name" value="<?= htmlspecialchars($chart['account_name']) ?>" placeholder="Enter an Account Name"
+                            <input type="text" name="acc_name" value="<?= ($chart['account_name']) ?>" placeholder="Enter an Account Name"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
                         </div>
 
@@ -344,7 +356,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Description</label>
                             <textarea name="description" placeholder="Enter a Description for the Account"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= htmlspecialchars($chart['description']) ?></textarea>
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($chart['description']) ?></textarea>
                         </div>
 
                         <!-- Buttons -->
@@ -386,7 +398,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                             <div class="text-left">
                                 <h3 id="delete-dialog-title-<?= $chart['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Account</h3>
                                 <p class="mt-2 text-sm text-gray-600">
-                                    Are you sure you want to delete <span class="font-semibold"><?= htmlspecialchars($chart['account_name']) ?></span>? This action cannot be undone.
+                                    Are you sure you want to delete <span class="font-semibold"><?= ($chart['account_name']) ?></span>? This action cannot be undone.
                                 </p>
                             </div>
                         </div>

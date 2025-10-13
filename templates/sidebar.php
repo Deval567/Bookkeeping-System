@@ -1,12 +1,12 @@
  <!-- Sidebar -->
- <aside class="row-span-2 w-64 bg-white border-r border-gray-200 shadow-md flex flex-col">
+ <aside class="row-span-2 w-64 bg-white border-r border-gray-500 shadow-md flex flex-col">
 
    <!-- User Info -->
    <div class="px-6 py-3 flex items-center justify-between border-b">
      <div>
        <p class="text-md opacity-80">Logged in as: <span class="font-semibold"><?php echo $_SESSION['username']; ?></span></p>
        <p class="text-md">Role: <span class="font-semibold"><?php
-                        $role = htmlspecialchars($_SESSION['role']);
+                        $role = $_SESSION['role'];
                         $roleStyles = [
                             'Admin' => 'bg-red-100 text-red-700',
                             'Staff' => 'bg-blue-100 text-blue-700',
@@ -67,7 +67,7 @@
     
 
            <li>
-             <a href="transaction.rules.php" class="flex flex items-center gap-3 px-2 py-2 rounded-lg transition-all 
+             <a href="transactionrules.php" class="flex flex items-center gap-3 px-2 py-2 rounded-lg transition-all 
               <?php echo ($title == 'Transaction Rules')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
