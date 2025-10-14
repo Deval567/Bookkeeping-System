@@ -98,7 +98,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
 
 
     <!-- Search and Filter Form -->
-    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+    <div class="bg-white  p-4 mb-4">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <!-- Search Input -->
             <div class="flex-1">
