@@ -91,6 +91,7 @@ $total_pages = $userModel->getTotalPages($search, $filter);
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <!-- Search Input -->
             <div class="flex-1">
+                <label class="block text-sm text-gray-700 mb-1">Search</label>
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -106,6 +107,7 @@ $total_pages = $userModel->getTotalPages($search, $filter);
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
+                <label class="block text-sm text-gray-700 mb-1">User Role</label>
                 <select
                     name="filter"
                     onchange="this.form.submit()"

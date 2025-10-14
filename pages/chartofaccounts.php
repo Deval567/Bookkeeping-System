@@ -91,6 +91,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <!-- Search Input -->
             <div class="flex-1">
+                <label class="block text-sm text-gray-700 mb-1">Search</label>
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -106,6 +107,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
+                <label class="block text-sm text-gray-700 mb-1">Account Type</label>
                 <select
                     name="filter"
                     onchange="this.form.submit()"
@@ -120,7 +122,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
             </div>
 
             <!-- Buttons -->
-            <div class="flex gap-2">
+            <div class="flex gap-2 mt-5">
                 <button
                     type="submit"
                     class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-200 flex items-center gap-2">
@@ -308,6 +310,8 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
         </div>
     </dialog>
 </el-dialog>
+
+<!-- Edit Account Modal -->
 <?php foreach ($charts as $chart): ?>
     <el-dialog>
         <dialog id="edit-dialog-<?= $chart['id'] ?>" aria-labelledby="edit-dialog-title-<?= $chart['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
@@ -332,7 +336,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
 
                     <!-- Edit Account Form -->
                     <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                        <input type="hidden" name="id" value="<?= ($chart['id']) ?>">
+                        <input type="hidden" name="id" value="<?= ($transaction['id']) ?>">
                         <input type="hidden" name="action" value="update_account">
 
                         <div>
@@ -378,7 +382,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
     </el-dialog>
 <?php endforeach; ?>
 
-<!-- Delete User Modal -->
+<!-- Delete Account Modal -->
 <?php foreach ($charts as $chart): ?>
     <el-dialog>
         <dialog id="delete-dialog-<?= $chart['id'] ?>" aria-labelledby="delete-dialog-title-<?= $chart['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
