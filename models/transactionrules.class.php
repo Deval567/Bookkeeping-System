@@ -70,7 +70,7 @@ class transactionRules
 
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
-                $conditions[] = "(tr.rule_name LIKE '%$search%' OR tr.category LIKE '%$search%' OR tr.description LIKE '%$search%')";
+                $conditions[] = "(tr.rule_name LIKE '%$search%' OR tr.category LIKE '%$search%' OR tr.description LIKE '%$search%' OR da.account_name LIKE '%$search%' OR ca.account_name LIKE '%$search%')";
             }
 
             if ($categoryFilter !== '') {

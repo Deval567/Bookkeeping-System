@@ -36,7 +36,7 @@ if (!empty($errors)) {
         exit;
 
     }else{
-        if($user['password'] === $password){
+        if($user['password'] === $password && $user['username'] === $username){
             // Password is the same in the database
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
