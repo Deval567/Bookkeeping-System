@@ -56,4 +56,3 @@ include_once "templates/header.php";
   </section>
 </main>
 </body>
-<?php include_once "templates/closing.php"; ?>

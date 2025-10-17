@@ -85,7 +85,7 @@ switch ($action) {
             exit;
         }
 
-        $updated = $user->updateUser($id, $conn, $username, $password, $roles);
+        $updated = $user->updateUser($id, $username, $password, $roles);
         $errors = $validator->validate($username, $password, $roles);
         if ($updated) {
             $_SESSION['success_message'] = "User updated successfully.";

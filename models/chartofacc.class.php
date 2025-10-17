@@ -17,7 +17,8 @@ class ChartofAccounts
         $this->account_type = $account_type;
         $this->description = $description;
     }
-    public function getAllChart(){
+    public function getAllChart()
+    {
         $sql = "SELECT * FROM chart_of_accounts ORDER BY account_type ASC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
@@ -121,28 +122,48 @@ class ChartofAccounts
     public function createAccount()
     {
         $sql = "INSERT INTO chart_of_accounts (account_name, account_type, description) VALUES (?, ?, ?)";
-        $stmt = mysqli_prepare($this->conn, $sql);
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
         mysqli_stmt_bind_param($stmt, 'sss', $this->account_name, $this->account_type, $this->description);
-        return mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
     }
+
     public function updateAccount($id, $account_name, $account_type, $description)
     {
         $sql = "UPDATE chart_of_accounts SET account_name = ?, account_type = ?, description = ? WHERE id = ?";
         $stmt = mysqli_stmt_init($this->conn);
+
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             return false;
         }
+
         mysqli_stmt_bind_param($stmt, "sssi", $account_name, $account_type, $description, $id);
-        return mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
     }
+
     public function deleteAccount($id)
     {
         $sql = "DELETE FROM chart_of_accounts WHERE id = ?";
         $stmt = mysqli_stmt_init($this->conn);
+
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             return false;
         }
+
         mysqli_stmt_bind_param($stmt, "i", $id);
-        return mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
     }
 }

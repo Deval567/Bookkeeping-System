@@ -6,22 +6,25 @@ class transactionRules
     public $conn;
     public $rule_name;
     public $category;
-    public $debit_account;
-    protected $credit_account;
     protected $description;
     private $limit = 10;
 
-    public function __construct($conn, $id, $rule_name, $category, $debit_account, $credit_account, $description)
+    public function __construct($conn, $id, $rule_name, $category, $description)
     {
         $this->conn = $conn;
         $this->id = $id;
         $this->rule_name = $rule_name;
         $this->category = $category;
-        $this->debit_account = $debit_account;
-        $this->credit_account = $credit_account;
         $this->description = $description;
     }
-    public function getTotalRules($search = '', $categoryFilter = '', $debitAccountFilter = '', $creditAccountFilter = '')
+    public function getAllRules()
+    {
+        $sql = "SELECT * FROM transaction_rules ORDER BY category ASC";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    public function getTotalRules($search = '', $categoryFilter = '')
     {
         $search = trim($search);
         $conditions = [];
@@ -36,16 +39,6 @@ class transactionRules
             $conditions[] = "category = '$categoryFilter'";
         }
 
-        if ($debitAccountFilter !== '') {
-            $debitAccountFilter = mysqli_real_escape_string($this->conn, $debitAccountFilter);
-            $conditions[] = "debit_account_id = $debitAccountFilter";
-        }
-
-        if ($creditAccountFilter !== '') {
-            $creditAccountFilter = mysqli_real_escape_string($this->conn, $creditAccountFilter);
-            $conditions[] = "credit_account_id = $creditAccountFilter";
-        }
-
         $whereClause = '';
         if (!empty($conditions)) {
             $whereClause = "WHERE " . implode(' AND ', $conditions);
@@ -57,7 +50,7 @@ class transactionRules
 
         return $row['total'];
     }
-    public function getPaginatedRules($page = 1, $search = '', $categoryFilter = '', $debitAccountFilter = '', $creditAccountFilter = '')
+    public function getPaginatedRules($page = 1, $search = '', $categoryFilter = '')
     {
         $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
@@ -65,12 +58,12 @@ class transactionRules
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' ||  $categoryFilter !== '' || $debitAccountFilter !== '' || $creditAccountFilter !== '') {
+        if ($search !== '' ||  $categoryFilter !== '') {
             $conditions = [];
 
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
-                $conditions[] = "(tr.rule_name LIKE '%$search%' OR tr.category LIKE '%$search%' OR tr.description LIKE '%$search%' OR da.account_name LIKE '%$search%' OR ca.account_name LIKE '%$search%')";
+                $conditions[] = "(rule_name LIKE '%$search%' OR category LIKE '%$search%' OR description LIKE '%$search%')";
             }
 
             if ($categoryFilter !== '') {
@@ -78,42 +71,68 @@ class transactionRules
                 $conditions[] = "category = '$categoryFilter'";
             }
 
-            if ($debitAccountFilter !== '') {
-                $debitAccountFilter = mysqli_real_escape_string($this->conn, $debitAccountFilter);
-                $conditions[] = "debit_account_id = $debitAccountFilter";
-            }
-
-            if ($creditAccountFilter !== '') {
-                $creditAccountFilter = mysqli_real_escape_string($this->conn, $creditAccountFilter);
-                $conditions[] = "credit_account_id = $creditAccountFilter";
-            }
 
             $filterQuery = "WHERE " . implode(' AND ', $conditions);
         }
 
-        $sql ="SELECT 
-            tr.id,
-            tr.rule_name,
-            tr.category,
-            tr.debit_account_id,
-            tr.credit_account_id,
-            tr.description,
-            da.account_name AS debit_account_name,
-            ca.account_name AS credit_account_name
-        FROM transaction_rules tr
-        LEFT JOIN chart_of_accounts da ON tr.debit_account_id = da.id
-        LEFT JOIN chart_of_accounts ca ON tr.credit_account_id = ca.id
+        $sql = "SELECT * FROM transaction_rules
         $filterQuery 
-        ORDER BY tr.category ASC 
+        ORDER BY category ASC 
         LIMIT {$this->limit} OFFSET {$offset}";
 
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalPages($search = '', $categoryFilter = '', $debitAccountFilter = '', $creditAccountFilter = '')
+    public function getTotalPages($search = '', $categoryFilter = '')
     {
-        $totalRules = $this->getTotalRules($search, $categoryFilter, $debitAccountFilter, $creditAccountFilter);
+        $totalRules = $this->getTotalRules($search, $categoryFilter);
         return ceil($totalRules / $this->limit);
+    }
+  public function createTransactionRule($rule_name, $category,$description)
+{
+    $sql = "INSERT INTO transaction_rules (rule_name, category,  description) VALUES (?, ?, ?)";
+    $stmt = mysqli_stmt_init($this->conn);
+
+    if (!mysqli_stmt_prepare($stmt, $sql)) {
+        return false;
+    }
+
+    mysqli_stmt_bind_param($stmt, "sss", $rule_name, $category, $description);
+    $result = mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    return $result;
+}
+    public function deleteTransactionRule($id)
+    {
+        $sql = "DELETE FROM transaction_rules WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
+    }
+
+    public function updateTransactionRule($id, $rule_name, $category, $description)
+    {
+        $sql = "UPDATE transaction_rules SET rule_name = ?, category = ?, description = ? WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "sssi", $rule_name, $category, $description, $id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
     }
 }

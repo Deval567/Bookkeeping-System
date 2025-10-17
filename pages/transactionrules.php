@@ -8,20 +8,18 @@ require_once "../models/transactionrules.class.php";
 require_once "../models/chartofacc.class.php";
 
 $chartofacc = new ChartofAccounts($conn, null, null, null, null);
-$transactionRules = new transactionRules($conn, null, null, null, null, null, null);
+$transactionRules = new transactionRules($conn, null, null, null, null);
 
 $page   = $_GET['page'] ?? 1;
 $search = $_GET['search'] ?? '';
-$categoryFilter = $_GET['category'] ?? '';
-$debitAccountFilter = $_GET['debit_account_id'] ?? '';
-$creditAccountFilter = $_GET['credit_account_id'] ?? '';
+$categoryFilter = $_GET['filter'] ?? '';
 
-$queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($categoryFilter)
-    . "&debit_account_id=" . urlencode($debitAccountFilter) . "&credit_account_id=" . urlencode($creditAccountFilter);
+
+$queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($categoryFilter);
 
 $charts = $chartofacc->getAllChart();
-$transactions  = $transactionRules->getPaginatedRules($page, $search,  $categoryFilter, $debitAccountFilter, $creditAccountFilter);
-$total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debitAccountFilter, $creditAccountFilter);
+$transactions  = $transactionRules->getPaginatedRules($page, $search, $categoryFilter);
+$total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
 ?>
 
 <main class="g-gray-100 px-6 py-2">
@@ -70,7 +68,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
     endif;
     ?>
 
-    <?php if (isset($_SESSION['rules_error'])): ?>
+    <?php if (isset($_SESSION['transactionrules_errors'])): ?>
         <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
             <div class="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 shadow-lg">
                 <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
@@ -79,7 +77,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <?php foreach ($_SESSION['rules_error'] as $error): ?>
+                    <?php foreach ($_SESSION['transactionrules_errors'] as $error): ?>
                         <p class="text-sm font-medium text-red-800">
                             <?php echo ($error); ?>
                         </p>
@@ -93,7 +91,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
             </div>
         </div>
     <?php
-        unset($_SESSION['rules_error']);
+        unset($_SESSION['transactionrules_errors']);
     endif;
     ?>
 
@@ -123,48 +121,17 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
             <div class="sm:w-48">
                 <label class="block text-sm text-gray-700 mb-1">Sort by Category</label>
                 <select
-                    name="category"
+                    name="filter"
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--Category--</option>
-                    <option value="General" <?= ($_GET['category'] ?? '') === 'General' ? 'selected' : '' ?>>General</option>
-                    <option value="Invoice" <?= ($_GET['category'] ?? '') === 'Invoice' ? 'selected' : '' ?>>Invoice</option>
-                    <option value="Payment" <?= ($_GET['category'] ?? '') === 'Payment' ? 'selected' : '' ?>>Payment</option>
-                    <option value="Purchase" <?= ($_GET['category'] ?? '') === 'Purchase' ? 'selected' : '' ?>>Purchase</option>
+                    <option value="">--All Category--</option>
+                    <option value="General" <?= ($_GET['filter'] ?? '') === 'General' ? 'selected' : '' ?>>General</option>
+                    <option value="Invoice" <?= ($_GET['filter'] ?? '') === 'Invoice' ? 'selected' : '' ?>>Invoice</option>
+                    <option value="Payment" <?= ($_GET['filter'] ?? '') === 'Payment' ? 'selected' : '' ?>>Payment</option>
+                    <option value="Purchase" <?= ($_GET['filter'] ?? '') === 'Purchase' ? 'selected' : '' ?>>Purchase</option>
                 </select>
             </div>
 
-            <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Sort by Debit Account</label>
-                <select
-                    name="debit_account_id"
-                    onchange="this.form.submit()"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--Debit Accounts--</option>
-                    <?php foreach ($charts as $chart): ?>
-                        <option value="<?= $chart['id'] ?>" <?= ($_GET['debit_account_id'] ?? '') === $chart['id'] ? 'selected' : '' ?>>
-                            <?= $chart['account_name']; ?>
-                        </option>
-                    <?php endforeach; ?>
-
-                </select>
-            </div>
-
-            <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Sort by Credit Account</label>
-                <select
-                    name="credit_account_id"
-                    onchange="this.form.submit()"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--Credit Accounts--</option>
-                    <?php foreach ($charts as $chart): ?>
-                        <option value="<?= $chart['id'] ?>" <?= ($_GET['credit_account_id'] ?? '') === $chart['id'] ? 'selected' : '' ?>>
-                            <?= $chart['account_name']; ?>
-                        </option>
-                    <?php endforeach; ?>
-
-                </select>
-            </div>
 
             <!-- Buttons -->
             <div class="flex gap-2 mt-5">
@@ -191,69 +158,74 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
         </form>
     </div>
 
-    <!-- Chart of Account Table -->
+    <!-- Transaction Rule Table -->
     <div class=" rounded-lg shadow">
-        <table class="min-w-full bg-white">
-            <thead>
-                <tr class="bg-red-700 text-white">
-                    <th class="py-2 px-4 text-left text-sm font-medium">Transaction Rule Name</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium">Category</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium">Debit Account</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium">Credit Account</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium">Description</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
+        <table class="min-w-full bg-white border border-gray-200">
+    <thead>
+        <tr class="bg-red-700 text-white">
+            <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Rule Name</th>
+            <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Category</th>
+            <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Description</th>
+            <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody class="divide-y divide-gray-200">
+        <?php if (empty($transactions)): ?>
+            <tr>
+                <td colspan="6" class="py-4 px-4 text-center text-gray-500 font-semibold border">
+                    No Transaction Rules found.
+                </td>
+            </tr>
+        <?php else: ?>
+            <?php foreach ($transactions as $transaction): ?>
+                <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
+                    <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
+                        <?= ($transaction['rule_name']); ?>
+                    </td>
+
+                    <td class="py-2 px-4 text-center border-r border-gray-200">
+                        <?php
+                        $cat = htmlspecialchars($transaction['category']);
+                        $categoryStyle = [
+                            'General' => 'bg-purple-100 text-purple-700',
+                            'Invoice' => 'bg-green-100 text-green-700',
+                            'Purchase' => 'bg-red-100 text-red-700',
+                            'Payment' => 'bg-blue-100 text-blue-700',
+                        ];
+                        $style = $categoryStyle[$transaction['category']] ?? 'bg-gray-100 text-gray-700';
+                        ?>
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
+                            <?= strtoupper($cat) ?>
+                        </span>
+                    </td>
+
+                    <td class="py-2 px-4 text-gray-600 border-r border-gray-200">
+                        <?= ($transaction['description']); ?>
+                    </td>
+                    <td class="py-2 px-4 border-gray-200">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button command="show-modal" commandfor="edit-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
+                            </button>
+
+                            <button command="show-modal" commandfor="delete-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
                 </tr>
-            </thead>
-
-            <tbody class="divide-y divide-gray-200">
-                <?php if (empty($transactions)): ?>
-                    <tr>
-                        <td colspan="6" class="py-4 px-4 text-center text-gray-500 font-semibold">
-                        No Transaction Rules found.
-                        </td>
-                    </tr>
-                <?php else: ?>
-                <?php foreach ($transactions as $transaction): ?>
-                    <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02] ">
-                        <td class="py-2 px-4 text-gray-900 font-medium">
-                            <?= ($transaction['rule_name']); ?>
-                        </td>
-                        <td class="py-2 px-4 text-gray-600 ">
-                            <?= ($transaction['category']); ?>
-                        </td>
-                        <td class="py-2 px-4 text-gray-600">
-                            <?= ($transaction['debit_account_name']); ?>
-                        </td>
-                        <td class="py-2 px-4 text-gray-600">
-                            <?= ($transaction['credit_account_name']); ?>
-                        </td>
-
-                        <td class="py-2 px-4 text-gray-600">
-                            <?= ($transaction['description']); ?>
-                        </td>
-                        <td class="py-2 px-4">
-                            <div class="flex items-center justify-center space-x-2">
-                                <button command="show-modal" commandfor="edit-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                    </svg>
-                                </button>
-
-                                <button command="show-modal" commandfor="delete-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </tbody>
+</table>
     </div>
 
-    <!-- Pagination Links !-->
+   <!-- Pagination Links !-->
     <div class="flex justify-center my-4 space-x-2 pb-4">
         <?php if ($page > 1): ?>
             <a href="?page=<?= $page - 1 . $queryParams ?>"
@@ -312,11 +284,11 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                 </div>
 
                 <!-- Add Transaction Form -->
-                <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                    <input type="hidden" name="action" value="add_account">
+                <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                    <input type="hidden" name="action" value="add_rule">
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
-                        <input type="text" name="rule_names" placeholder="Enter a Transaction Rule Name"
+                        <input type="text" name="rule_name" placeholder="Enter a Transaction Rule Name"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" />
                     </div>
 
@@ -325,38 +297,11 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                         <label class="block text-sm text-gray-700 mb-1">Category</label>
                         <select name="category"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                            <option value="General">--Choose a Category--</option>
+                            <option value="">--Choose a Category--</option>
                             <option value="General">General</option>
                             <option value="Invoice">Invoice</option>
                             <option value="Payment">Payment</option>
                             <option value="Purchase">Purchase</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">-- Choose a Debit Account --</label>
-                        <select
-                            name="debit_account_id"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                            <option value="">--Debit Accounts--</option>
-                            <?php foreach ($charts as $chart): ?>
-                                <option value="<?= $chart['id'] ?>" <?= ($_GET['debit_account_id'] ?? '') === $chart['id'] ? 'selected' : '' ?>>
-                                    <?= $chart['account_name']; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">-- Choose a Credit Account --</label>
-                        <select
-                            name="credit_account_id"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                            <option value="">--Credit Accounts--</option>
-                            <?php foreach ($charts as $chart): ?>
-                                <option value="<?= $chart['id'] ?>" <?= ($_GET['credit_account_id'] ?? '') === $chart['id'] ? 'selected' : '' ?>>
-                                    <?= $chart['account_name']; ?>
-                                </option>
-                            <?php endforeach; ?>
-
                         </select>
                     </div>
 
@@ -408,13 +353,13 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                     </div>
 
                     <!-- Edit Account Form -->
-                    <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4 space-y-4">
                         <input type="hidden" name="id" value="<?= ($transaction['id']) ?>">
-                        <input type="hidden" name="action" value="update_account">
+                        <input type="hidden" name="action" value="update_rule">
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
-                            <input type="text" name="acc_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
+                            <input type="text" name="rule_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
                         </div>
 
@@ -422,6 +367,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                             <label class="block text-sm text-gray-700 mb-1">Category</label>
                             <select name="category"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                                <option value="">--Choose a Category--</option>
                                 <option value="General" <?= $transaction['category'] == 'General' ? 'selected' : '' ?>>General</option>
                                 <option value="Invoice" <?= $transaction['category'] == 'Invoice' ? 'selected' : '' ?>>Invoice</option>
                                 <option value="Payment" <?= $transaction['category'] == 'Payment' ? 'selected' : '' ?>>Payment</option>
@@ -429,33 +375,6 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">-- Choose a Debit Account --</label>
-                            <select
-                                name="debit_account_id"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                                <option value="">--Debit Accounts--</option>
-                                <?php foreach ($charts as $chart): ?>
-                                    <option value="<?= $chart['id'] ?>" <?= $transaction['debit_account_id'] == $chart['id'] ? 'selected' : '' ?>>
-                                        <?= $chart['account_name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">-- Choose a Credit Account --</label>
-                            <select
-                                name="debit_account_id"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                                <option value="">--Debit Accounts--</option>
-                                <?php foreach ($charts as $chart): ?>
-                                    <option value="<?= $chart['id'] ?>" <?= $transaction['credit_account_id'] == $chart['id'] ? 'selected' : '' ?>>
-                                        <?= $chart['account_name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Description</label>
@@ -509,8 +428,8 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter, $debit
                     </div>
 
                     <!-- Delete Form -->
-                    <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4">
-                        <input type="hidden" name="action" value="delte_account">
+                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4">
+                        <input type="hidden" name="action" value="delete_rule">
                         <input type="hidden" name="id" value="<?= $transaction['id'] ?>">
                         <input type="hidden" name="page" value="<?= $page ?>">
 

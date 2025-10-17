@@ -1,19 +1,27 @@
 <?php
-$title = "Chart of Accounts";
+$title = "Transaction Rule Lines";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
 require_once "../configs/dbc.php";
+require_once "../models/transactionrulelines.class.php";
+require_once "../models/transactionrules.class.php";
 require_once "../models/chartofacc.class.php";
-$chartofacc = new ChartofAccounts($conn, null, null, null, null);
+
+$chartofAcc = new ChartofAccounts($conn, null, null, null, null, null);
+$transactionRules = new transactionRules($conn, null, null, null, null);
+$transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null);
 
 $page   = $_GET['page'] ?? 1;
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
 
 $queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($filter);
-$charts = $chartofacc->getPaginatedCharts($page, $search, $filter);
-$total_pages = $chartofacc->getTotalPages($search, $filter);
+$accounts = $chartofAcc->getAllChart();
+$rules = $transactionRules->getAllRules();
+$total_pages = $transactionRuleLines->getTotalPages($search, $filter);
+$rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $filter);
+
 
 ?>
 <main class="g-gray-100 px-6 py-2">
@@ -31,7 +39,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
             </svg>
-            <span>Add New Account</span>
+            <span>Add New Rule Line</span>
         </button>
     </div>
 
@@ -101,24 +109,21 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                         type="text"
                         name="search"
                         value="<?= $_GET['search'] ?? '' ?>"
-                        placeholder="Search account name or description..."
+                        placeholder="Search rule name, account name, or entry type ..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
             </div>
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Sort by Account Type</label>
+                <label class="block text-sm text-gray-700 mb-1">Sort by Entry Type</label>
                 <select
                     name="filter"
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--All Types--</option>
-                    <option value="Asset" <?= ($_GET['filter'] ?? '') === 'Asset' ? 'selected' : '' ?>>Asset</option>
-                    <option value="Liability" <?= ($_GET['filter'] ?? '') === 'Liability' ? 'selected' : '' ?>>Liability</option>
-                    <option value="Equity" <?= ($_GET['filter'] ?? '') === 'Equity' ? 'selected' : '' ?>>Equity</option>
-                    <option value="Revenue" <?= ($_GET['filter'] ?? '') === 'Revenue' ? 'selected' : '' ?>>Revenue</option>
-                    <option value="Expense" <?= ($_GET['filter'] ?? '') === 'Expense' ? 'selected' : '' ?>>Expense</option>
+                    <option value="">--All Entry Types--</option>
+                    <option value="debit" <?= ($_GET['filter'] ?? '') === 'debit' ? 'selected' : '' ?>>Debit</option>
+                    <option value="credit" <?= ($_GET['filter'] ?? '') === 'credit' ? 'selected' : '' ?>>Credit</option>
                 </select>
             </div>
 
@@ -146,58 +151,55 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
             </div>
         </form>
     </div>
-    <!-- Chart of Account Table -->
+    <!-- Rule Lines Table -->
     <div class=" rounded-lg shadow">
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-red-700 text-white">
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Rule Name</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Account Name</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Account Type</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
+                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Entry Type</th>
                     <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                <?php if (empty($charts)): ?>
+                <?php if (empty($rule_lines)): ?>
                     <tr>
                         <td colspan="4" class="py-4 px-4 text-center text-gray-500 font-semibold border">
                             No Accounts found.
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($charts as $chart): ?>
+                    <?php foreach ($rule_lines as $line): ?>
                         <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
-                                <?= ($chart['account_name']); ?>
+                                <?= ($line['rule_name']); ?>
+                            </td>
+                            <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
+                                <?= ($line['account_name']); ?>
                             </td>
                             <td class="py-2 px-4 text-center border-r border-gray-200">
                                 <?php
-                                $acc_type = $chart['account_type'];
-                                $accTypeStyle = [
-                                    'Asset' => 'bg-red-100 text-red-700',
-                                    'Liability' => 'bg-blue-100 text-blue-700',
-                                    'Equity' => 'bg-green-100 text-green-700',
-                                    'Expense' => 'bg-yellow-100 text-yellow-700',
-                                    'Revenue' => 'bg-purple-100 text-purple-700',
+                                $entry_type = $line['entry_type'];
+                                $entryTypeStyle = [
+                                    'debit' => 'bg-green-100 text-green-700',
+                                    'credit' => 'bg-red-100 text-red-700',
                                 ];
-                                $style = $accTypeStyle[$chart['account_type']] ?? 'bg-gray-100 text-gray-700';
+                                $style = $entryTypeStyle[$line['entry_type']] ?? 'bg-gray-100 text-gray-700';
                                 ?>
                                 <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
-                                    <?= strtoupper($acc_type) ?>
+                                    <?= strtoupper($entry_type) ?>
                                 </span>
-                            </td>
-                            <td class="py-2 px-4 text-gray-600 border-r border-gray-200">
-                                <?= ($chart['description']); ?>
                             </td>
                             <td class="py-2 px-4 border-gray-200">
                                 <div class="flex items-center justify-center space-x-2">
-                                    <button command="show-modal" commandfor="edit-dialog-<?= $chart['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
+                                    <button command="show-modal" commandfor="edit-dialog-<?= $line['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                         </svg>
                                     </button>
 
-                                    <button command="show-modal" commandfor="delete-dialog-<?= $chart['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
+                                    <button command="show-modal" commandfor="delete-dialog-<?= $line['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                         </svg>
@@ -211,6 +213,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
         </table>
     </div>
     </div>
+
 
     <!-- Pagination Links !-->
     <div class="flex justify-center my-4 space-x-2 pb-4">
@@ -245,13 +248,9 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
             </a>
         <?php endif; ?>
     </div>
-
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
-<!--Modals -->
-
-<!-- Add New Account Modal -->
+<!-- Add New Rule Line Modal -->
 <el-dialog>
     <dialog id="dialog" aria-labelledby="dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
         <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
@@ -268,38 +267,64 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                             </svg>
                         </div>
                         <div class="text-left">
-                            <h3 id="dialog-title" class="text-lg font-semibold text-gray-900 pt-2">Add New Account</h3>
+                            <h3 id="dialog-title" class="text-lg font-semibold text-gray-900 pt-2">Add Transaction Rule Line</h3>
                         </div>
                     </div>
                 </div>
 
-                <!-- Add Account Form -->
-                <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                    <input type="hidden" name="action" value="add_account">
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                        <input type="text" name="acc_name" placeholder="Enter an Account Name"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" />
-                    </div>
+                <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                    <input type="hidden" name="action" value="add_multiple_accounts">
 
-
+                    <!-- Rule Name -->
                     <div>
-                        <label class="block text-sm text-gray-700 mb-1">Account Type</label>
-                        <select name="acc_type"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                            <option value="Asset">Asset</option>
-                            <option value="Liability">Liability</option>
-                            <option value="Equity">Equity</option>
-                            <option value="Revenue">Revenue</option>
-                            <option value="Expense">Expense</option>
+                        <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                        <select name="rule_id"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none ">
+                            <option value="">Select a Transaction Rule</option>
+                            <?php foreach ($rules as $rule): ?>
+                                <option value="<?= $rule['id']; ?>"><?= $rule['rule_name']; ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">Description</label>
-                        <textarea name="description" placeholder="Enter a Description for the Account"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
+                    <!-- Dynamic container -->
+                    <div id="line-entries" class="space-y-2">
+                        <div class="line-entry flex gap-4 items-center">
+                            <div class="flex-1">
+                                <label class="block text-sm text-gray-700 mb-1">Account Name</label>
+                                <select name="account_id[]" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                    <option value="">Select an Account</option>
+                                    <?php foreach ($accounts as $account): ?>
+                                        <option value="<?= $account['id']; ?>"><?= $account['account_name']; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="w-40">
+                                <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
+                                <select name="entry_type[]" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                    <option value="">Select Entry Type</option>
+                                    <option value="debit">Debit</option>
+                                    <option value="credit">Credit</option>
+                                </select>
+                            </div>
+
+                            <button type="button"
+                                class="remove-line mt-7 p-1 text-red-500 hover:text-red-700 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="2"
+                                    stroke="currentColor"
+                                    class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Add line button -->
+                    <button type="button" id="add-line" class="text-blue-600 font-semibold">+ Add Line</button>
 
                     <!-- Buttons -->
                     <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
@@ -319,124 +344,30 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
     </dialog>
 </el-dialog>
 
-<!-- Edit Account Modal -->
-<?php foreach ($charts as $chart): ?>
-    <el-dialog>
-        <dialog id="edit-dialog-<?= $chart['id'] ?>" aria-labelledby="edit-dialog-title-<?= $chart['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
-            <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
+<!-- Edit Rule Line Modal -->
 
-            <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
-                <el-dialog-panel class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all">
+<!-- Delete Rule Line Modal -->
 
-                    <!-- Header -->
-                    <div class="px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="flex items-start space-x-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                </svg>
-                            </div>
-                            <div class="text-left">
-                                <h3 id="edit-dialog-title-<?= $chart['id'] ?>" class="text-lg font-semibold text-gray-900">Edit Account</h3>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Edit Account Form -->
-                    <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                        <input type="hidden" name="id" value="<?= ($chart['id']) ?>">
-                        <input type="hidden" name="action" value="update_account">
+<!-- Scripts for Dynamic Line Entries -->
+<script>
+    document.getElementById('add-line').addEventListener('click', function() {
+        const container = document.getElementById('line-entries');
+        const newLine = container.firstElementChild.cloneNode(true);
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                            <input type="text" name="acc_name" value="<?= ($chart['account_name']) ?>" placeholder="Enter an Account Name"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
-                        </div>
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Account Type</label>
-                            <select name="acc_type"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="Asset" <?= $chart['account_type'] == 'Asset' ? 'selected' : '' ?>>Asset</option>
-                                <option value="Liability" <?= $chart['account_type'] == 'Liability' ? 'selected' : '' ?>>Liability</option>
-                                <option value="Equity" <?= $chart['account_type'] == 'Equity' ? 'selected' : '' ?>>Equity</option>
-                                <option value="Revenue" <?= $chart['account_type'] == 'Revenue' ? 'selected' : '' ?>>Revenue</option>
-                                <option value="Expense" <?= $chart['account_type'] == 'Expense' ? 'selected' : '' ?>>Expense</option>
-                            </select>
-                        </div>
+        newLine.querySelectorAll('select').forEach(select => select.value = '');
+        container.appendChild(newLine);
+    });
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Description</label>
-                            <textarea name="description" placeholder="Enter a Description for the Account"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($chart['description']) ?></textarea>
-                        </div>
+    document.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.remove-line');
+        if (removeBtn) {
+            const lines = document.querySelectorAll('.line-entry');
+            if (lines.length > 1) removeBtn.closest('.line-entry').remove();
+        }
+    });
+</script>
+</body>
 
-                        <!-- Buttons -->
-                        <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
-                            <button type="submit"
-                                class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                                Update
-                            </button>
-                            <button type="button" command="close" commandfor="edit-dialog-<?= $chart['id'] ?>"
-                                class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-
-                </el-dialog-panel>
-            </div>
-        </dialog>
-    </el-dialog>
-<?php endforeach; ?>
-
-<!-- Delete Account Modal -->
-<?php foreach ($charts as $chart): ?>
-    <el-dialog>
-        <dialog id="delete-dialog-<?= $chart['id'] ?>" aria-labelledby="delete-dialog-title-<?= $chart['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
-            <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
-
-            <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
-                <el-dialog-panel class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all">
-
-                    <!-- Header -->
-                    <div class="px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="flex items-start space-x-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-red-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                                </svg>
-                            </div>
-                            <div class="text-left">
-                                <h3 id="delete-dialog-title-<?= $chart['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Account</h3>
-                                <p class="mt-2 text-sm text-gray-600">
-                                    Are you sure you want to delete <span class="font-semibold"><?= ($chart['account_name']) ?></span>? This action cannot be undone.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delete Form -->
-                    <form action="../controllers/chartofacc.controller.php" method="POST" class="px-6 pb-4">
-                        <input type="hidden" name="action" value="delete_account">
-                        <input type="hidden" name="id" value="<?= $chart['id'] ?>">
-                        <input type="hidden" name="page" value="<?= $page ?>">
-
-                        <!-- Buttons -->
-                        <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
-                            <button type="submit"
-                                class="inline-flex justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-                                Delete
-                            </button>
-                            <button type="button" command="close" commandfor="delete-dialog-<?= $chart['id'] ?>"
-                                class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-
-                </el-dialog-panel>
-            </div>
-        </dialog>
-    </el-dialog>
-<?php endforeach; ?>
+</html>

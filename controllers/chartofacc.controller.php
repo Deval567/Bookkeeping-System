@@ -59,9 +59,6 @@ switch ($action) {
             header("Location: ../pages/chartofaccounts.php");
             exit;
         } else {
-            $existingAccount = $chartofacc->isAccountExists();
-
-            if (!$existingAccount) {
                 $updated = $chartofacc->updateAccount($id, $account_name, $account_type, $description);
 
                 if ($updated) {
@@ -73,12 +70,7 @@ switch ($action) {
                     header("Location: ../pages/chartofaccounts.php");
                     exit;
                 }
-            } else {
-                $_SESSION['chartofacc_errors'] = ["Account already exists."];
-                header("Location: ../pages/chartofaccounts.php");
-                exit;
             }
-        }
         break;
 
     case "delete_account":
