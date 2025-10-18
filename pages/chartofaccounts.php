@@ -108,7 +108,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Sort by Account Type</label>
+                <label class="block text-sm text-gray-700 mb-1">Filter by Account Type</label>
                 <select
                     name="filter"
                     onchange="this.form.submit()"

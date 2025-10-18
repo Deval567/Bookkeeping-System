@@ -135,4 +135,15 @@ class transactionRules
 
         return $result;
     }
+    public function getRuleNamebyId($id)
+    {
+        $id = mysqli_real_escape_string($this->conn, $id);
+
+        $sql = "SELECT rule_name FROM transaction_rules WHERE id = '$id'";
+
+        $result = mysqli_query($this->conn, $sql);
+        $row = mysqli_fetch_assoc($result);
+
+        return $row ? $row['rule_name'] : null;
+    }
 }

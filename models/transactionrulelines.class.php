@@ -1,4 +1,4 @@
-<?php 
+<?php
 class TransactionRuleLines
 {
     public $id;
@@ -16,12 +16,25 @@ class TransactionRuleLines
         $this->account_id = $account_id;
         $this->entry_type = $entry_type;
     }
-     public function getTotalRuleLines($search = '', $filter = '')
+    public function getRuleIdRulelinesGroupByRuleNames()
+    {
+        $sql = "
+        SELECT trl.rule_id, tr.rule_name, GROUP_CONCAT(trl.id ORDER BY trl.id) AS rule_line_ids
+        FROM transaction_rule_lines trl
+        JOIN transaction_rules tr ON tr.id = trl.rule_id
+        GROUP BY trl.rule_id, tr.rule_name
+        ORDER BY tr.rule_name ASC";
+
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    public function getTotalRuleLines($search = '', $entry_type = '', $rule_id = '')
     {
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' || $filter !== '') {
+        if ($search !== '' || $entry_type !== '' || $rule_id !== '') {
             $conditions = [];
 
             if ($search !== '') {
@@ -31,9 +44,13 @@ class TransactionRuleLines
                               OR entry_type LIKE '%$search%')";
             }
 
-            if ($filter !== '') {
-                $filter = mysqli_real_escape_string($this->conn, $filter);
-                $conditions[] = "entry_type = '$filter'";
+            if ($entry_type !== '') {
+                $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
+                $conditions[] = "entry_type = '$entry_type'";
+            }
+            if ($rule_id !== '') {
+                $rule_id = mysqli_real_escape_string($this->conn, $rule_id);
+                $conditions[] = "trl.rule_id = '$rule_id'";
             }
 
             $filterQuery = "WHERE " . implode(' AND ', $conditions);
@@ -51,7 +68,7 @@ class TransactionRuleLines
         return (int)$row['total'];
     }
 
-    public function getPaginatedRuleLines($page = 1, $search = '', $filter = '')
+    public function getPaginatedRuleLines($page = 1, $search = '', $entry_type = '', $rule_id = '')
     {
         $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
@@ -59,7 +76,7 @@ class TransactionRuleLines
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' || $filter !== '') {
+        if ($search !== '' || $entry_type !== '' || $rule_id !== '') {
             $conditions = [];
 
             if ($search !== '') {
@@ -69,9 +86,13 @@ class TransactionRuleLines
                               OR entry_type LIKE '%$search%')";
             }
 
-            if ($filter !== '') {
-                $filter = mysqli_real_escape_string($this->conn, $filter);
-                $conditions[] = "entry_type = '$filter'";
+            if ($entry_type !== '') {
+                $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
+                $conditions[] = "entry_type = '$entry_type'";
+            }
+            if ($rule_id !== '') {
+                $rule_id = mysqli_real_escape_string($this->conn, $rule_id);
+                $conditions[] = "trl.rule_id = '$rule_id'";
             }
 
             $filterQuery = "WHERE " . implode(' AND ', $conditions);
@@ -99,5 +120,81 @@ JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
     public function getTotalPages($search = '', $filter = '')
     {
         return ceil($this->getTotalRuleLines($search, $filter) / $this->limit);
+    }
+    public function isRuleLineExists($rule_id, $account_id, $entry_type, $exclude_id = null)
+    {
+        $sql = "SELECT id FROM transaction_rule_lines 
+            WHERE rule_id = ? 
+              AND account_id = ? 
+              AND entry_type = ?";
+
+        // Exclude current row if updating
+        if ($exclude_id !== null) {
+            $sql .= " AND id != ?";
+        }
+
+        $stmt = mysqli_stmt_init($this->conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) return false;
+
+        if ($exclude_id !== null) {
+            mysqli_stmt_bind_param($stmt, "iisi", $rule_id, $account_id, $entry_type, $exclude_id);
+        } else {
+            mysqli_stmt_bind_param($stmt, "iis", $rule_id, $account_id, $entry_type);
+        }
+
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+
+        return mysqli_stmt_num_rows($stmt) > 0;
+    }
+
+    public function createTransactionRuleLine($rule_id, $account_id, $entry_type)
+    {
+
+        $sql = "INSERT INTO transaction_rule_lines (rule_id, account_id, entry_type) 
+                VALUES (?,?,?)";
+
+        $stmt = mysqli_stmt_init($this->conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "iis", $rule_id, $account_id, $entry_type);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
+    }
+    public function deleteTransactionRuleLine($id)
+    {
+        $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
+    }
+    public function updateTransactionRuleLine($id, $rule_id, $account_id, $entry_type)
+    {
+        $sql = "UPDATE transaction_rule_lines 
+                SET rule_id = ?, account_id = ?, entry_type = ? 
+                WHERE id = ?";
+
+        $stmt = mysqli_stmt_init($this->conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return false;
+        }
+
+        mysqli_stmt_bind_param($stmt, "iisi", $rule_id, $account_id, $entry_type, $id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        return $result;
     }
 }
