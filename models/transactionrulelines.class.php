@@ -16,14 +16,15 @@ class TransactionRuleLines
         $this->account_id = $account_id;
         $this->entry_type = $entry_type;
     }
-    public function getRuleIdRulelinesGroupByRuleNames()
+    public function getRuleIdRulelinesGroupedByCategory()
     {
         $sql = "
-        SELECT trl.rule_id, tr.rule_name, GROUP_CONCAT(trl.id ORDER BY trl.id) AS rule_line_ids
+        SELECT tr.category, tr.id AS rule_id, tr.rule_name, GROUP_CONCAT(trl.id ORDER BY trl.id) AS rule_line_ids
         FROM transaction_rule_lines trl
         JOIN transaction_rules tr ON tr.id = trl.rule_id
-        GROUP BY trl.rule_id, tr.rule_name
-        ORDER BY tr.rule_name ASC";
+        GROUP BY tr.category, tr.id, tr.rule_name
+        ORDER BY tr.category ASC, tr.rule_name ASC
+    ";
 
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);

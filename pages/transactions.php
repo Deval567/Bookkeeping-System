@@ -1,31 +1,43 @@
 <?php
-$title = "Transaction Rule Lines";
+$title = "Transactions";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
 require_once "../configs/dbc.php";
+require_once "../models/transactions.class.php";
 require_once "../models/transactionrulelines.class.php";
-require_once "../models/transactionrules.class.php";
-require_once "../models/chartofacc.class.php";
 
-$chartofAcc = new ChartofAccounts($conn, null, null, null, null, null);
-$transactionRules = new transactionRules($conn, null, null, null, null);
-$transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null);
+$transactionModel = new Transaction($conn, null, null, null, null, null, null);
+$transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null, null);
 
-$page   = $_GET['page'] ?? 1;
+
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+
+
 $search = $_GET['search'] ?? '';
-$entry_type = $_GET['entry_type'] ?? '';
-$rule_id = $_GET['rule_id'] ?? '';
+$filterRuleName = $_GET['rule_id'] ?? '';
+$filterUsername = $_GET['username'] ?? '';
+$filterDateFrom = $_GET['date_from'] ?? '';
+$filterDateTo = $_GET['date_to'] ?? '';
 
-$queryParams = "&search=" . urlencode($search) . "&entry_type=" . urlencode($entry_type) . "&rule_id=" . urlencode($rule_id);
-$accounts = $chartofAcc->getAllChart();
+$usernames = $transactionModel->getTransactionsGroupedByUser();
+$all_rule_names = $transactionModel->getTransactionsGroupByRuleName();
+$transactions = $transactionModel->getPaginatedTransactions($page, $search, $filterRuleName, $filterUsername, $filterDateFrom, $filterDateTo);
+$total_pages = $transactionModel->getTotalTransactionPages($search, $filterRuleName, $filterUsername, $filterDateFrom, $filterDateTo);
 $all_lines = $transactionRuleLines->getRuleIdRulelinesGroupedByCategory();
-$rules = $transactionRules->getAllRules();
-$total_pages = $transactionRuleLines->getTotalPages($search, $entry_type, $rule_id);
-$rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $entry_type, $rule_id);
+
+
+$queryParams = '&' . http_build_query([
+    'search' => $search,
+    'rule_id' => $filterRuleName,
+    'username' => $filterUsername,
+    'date_from' => $filterDateFrom,
+    'date_to' => $filterDateTo
+]);
 
 
 ?>
+
 <main class="g-gray-100 px-6 py-2">
     <div>
         <h2 class="text-2xl font-semibold"><?php echo $title ?></h2>
@@ -110,36 +122,49 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
                     <option value="">--All Rule Names--</option>
-                    <?php
-                    $currentCategory = '';
-                    foreach ($all_lines as $line):
-                        if ($line['category'] !== $currentCategory):
-                            $currentCategory = $line['category'];
-                    ?>
-                            <option disabled class="bg-gray-300 text-gray-700 cursor-default">
-                                <?= htmlspecialchars($currentCategory) ?>
-                            </option>
-                        <?php endif; ?>
-                        <option value="<?= $line['rule_id'] ?>" <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $line['rule_id']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($line['rule_name']) ?>
+                    <?php foreach ($all_rule_names as $name): ?>
+                        <option value="<?= $name['rule_id'] ?>" <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $name['rule_id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($name['rule_name']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
-
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Filter by Entry Type</label>
+                <label class="block text-sm text-gray-700 mb-1">Filter by Username</label>
                 <select
-                    name="entry_type"
+                    name="username"
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--All Entry Types--</option>
-                    <option value="debit" <?= ($_GET['entry_type'] ?? '') === 'debit' ? 'selected' : '' ?>>Debit</option>
-                    <option value="credit" <?= ($_GET['entry_type'] ?? '') === 'credit' ? 'selected' : '' ?>>Credit</option>
+                    <option value="">--All Users--</option>
+                    <?php foreach ($usernames as $user): ?>
+                        <option value="<?= $user['user_id'] ?>" <?= (isset($_GET['username']) && $_GET['username'] == $user['user_id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($user['username']) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
+            <div class="flex gap-2">
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Date From</label>
+                    <input
+                        type="date"
+                        onchange="this.form.submit()"
+                        name="date_from"
+                        value="<?= htmlspecialchars($_GET['date_from'] ?? '') ?>"
+                        class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1">Date To</label>
+                    <input
+                        onchange="this.form.submit()"
+                        type="date"
+                        name="date_to"
+                        value="<?= htmlspecialchars($_GET['date_to'] ?? '') ?>"
+                        class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                </div>
+            </div>
             <!-- Search Input -->
             <div class="flex-1">
                 <label class="block text-sm text-gray-700 mb-1">Search</label>
@@ -178,6 +203,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                     </a>
                 <?php endif; ?>
             </div>
+
         </form>
     </div>
     <!-- Rule Lines Table -->
@@ -185,50 +211,56 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-red-700 text-white">
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Date</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Rule Name</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Account Name</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Entry Type</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Reference Number #</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Total Amount</th>
+                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Encoded By</th>
                     <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                <?php if (empty($rule_lines)): ?>
+                <?php if (empty($transactions)): ?>
                     <tr>
-                        <td colspan="4" class="py-4 px-4 text-center text-gray-500 font-semibold border">
-                            No Accounts found.
+                        <td colspan="7" class="py-4 px-4 text-center text-gray-500 font-semibold border">
+                            No Transactions found.
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($rule_lines as $line): ?>
+                    <?php foreach ($transactions as $transaction): ?>
                         <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
-                                <?= ($line['rule_name']); ?>
+                                <?= date('Y-m-d', strtotime($transaction['transaction_date'])); ?>
+                            </td>
+
+                            <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
+                                <?= htmlspecialchars($transaction['rule_name']); ?>
+                            </td>
+
+                            <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
+                                <?= htmlspecialchars($transaction['reference_no']); ?>
                             </td>
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
-                                <?= ($line['account_name']); ?>
+                                <?= htmlspecialchars($transaction['description']); ?>
+                            </td>
+
+                            <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
+                                <?= number_format($transaction['total_amount'], 2); ?>
                             </td>
                             <td class="py-2 px-4 text-center border-r border-gray-200">
-                                <?php
-                                $entry_type = $line['entry_type'];
-                                $entryTypeStyle = [
-                                    'debit' => 'bg-green-100 text-green-700',
-                                    'credit' => 'bg-red-100 text-red-700',
-                                ];
-                                $style = $entryTypeStyle[$line['entry_type']] ?? 'bg-gray-100 text-gray-700';
-                                ?>
-                                <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
-                                    <?= strtoupper($entry_type) ?>
-                                </span>
+                                <?= htmlspecialchars($transaction['username']); ?>
                             </td>
+
                             <td class="py-2 px-4 border-gray-200">
                                 <div class="flex items-center justify-center space-x-2">
-                                    <button command="show-modal" commandfor="edit-dialog-<?= $line['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
+                                    <button command="show-modal" commandfor="edit-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-blue-600 hover:bg-blue-600 hover:text-white rounded transition-all">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                         </svg>
                                     </button>
 
-                                    <button command="show-modal" commandfor="delete-dialog-<?= $line['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
+                                    <button command="show-modal" commandfor="delete-dialog-<?= $transaction['id'] ?>" class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded transition-all">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                         </svg>
@@ -278,14 +310,17 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
         <?php endif; ?>
     </div>
 </main>
-
-<!-- Add New Rule Line Modal -->
+<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+<!-- Add New Transaction Modal -->
 <el-dialog>
     <dialog id="dialog" aria-labelledby="dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
-        <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
+        <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity
+            data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out
+            data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
 
         <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
-            <el-dialog-panel class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all">
+            <el-dialog-panel class="relative w-full max-w-6xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all
+                data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in">
 
                 <!-- Header -->
                 <div class="px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -294,78 +329,74 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                             </svg>
-
                         </div>
                         <div class="text-left">
-                            <h3 id="dialog-title" class="text-lg font-semibold text-gray-900 pt-2">Add Transaction Rule Line</h3>
+                            <h3 id="dialog-title" class="text-lg font-semibold text-gray-900 pt-2">Add Transaction</h3>
                         </div>
                     </div>
                 </div>
 
+                <!-- Form -->
                 <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4 space-y-4">
                     <input type="hidden" name="action" value="add_rule_lines">
 
-                    <!-- Rule Name -->
-                    <div>
-                        <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
-                        <select name="rule_id"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none ">
-                            <option value="">Select a Transaction Rule</option>
-                            <?php foreach ($rules as $rule): ?>
-                                <option value="<?= $rule['id']; ?>"><?= $rule['rule_name']; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <!-- 4-column grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Rule Name -->
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                            <select id="rule_id" name="rule_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                                <option value="">--All Rule Names--</option>
+                                <?php
+                                $currentCategory = '';
+                                foreach ($all_lines as $line):
+                                    if ($line['category'] !== $currentCategory):
+                                        $currentCategory = $line['category'];
+                                ?>
+                                        <option disabled class="text-gray-400 cursor-default"><?= htmlspecialchars($currentCategory) ?></option>
+                                    <?php endif; ?>
+                                    <option value="<?= $line['rule_id'] ?>"><?= htmlspecialchars($line['rule_name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                    <!-- Dynamic container -->
-                    <div id="line-entries" class="space-y-2">
-                        <div class="line-entry flex gap-4 items-center">
-                            <div class="flex-1">
-                                <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                                <select name="account_id[]" class="w-full border border-gray-300 rounded-md px-3 py-2">
-                                    <option value="">Select an Account</option>
-                                    <?php foreach ($accounts as $account): ?>
-                                        <option value="<?= $account['id']; ?>"><?= $account['account_name']; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                        <!-- Transaction Date -->
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Date</label>
+                            <input type="date" name="transaction_date" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                        </div>
 
-                            <div class="w-40">
-                                <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
-                                <select name="entry_type[]" class="w-full border border-gray-300 rounded-md px-3 py-2">
-                                    <option value="">Select Entry Type</option>
-                                    <option value="debit">Debit</option>
-                                    <option value="credit">Credit</option>
-                                </select>
-                            </div>
+                        <!-- Reference Number -->
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Reference Number #</label>
+                            <input type="text" placeholder="Enter Reference Number" name="reference_no" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                        </div>
 
-                            <button type="button"
-                                class="remove-line mt-7 p-1 text-red-500 hover:text-red-700 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="2"
-                                    stroke="currentColor"
-                                    class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                        <!-- Total Amount -->
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Total Amount</label>
+                            <input type="number" name="total_amount" placeholder="0.00" min="0" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                         </div>
                     </div>
 
-                    <!-- Add line button -->
-                    <button type="button" id="add-line" class="text-blue-600 font-semibold">+ Add Line</button>
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm text-gray-700 mb-1">Description</label>
+                        <textarea name="description" placeholder="Add a description for the transaction" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Rule Lines Display -->
+                    <div  class="mt-4">
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Transaction Rule Lines</h3>
+                        <div id="rule-lines-display">
+
+                        </div>
+                    </div>
 
                     <!-- Buttons -->
                     <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
-                        <button type="submit"
-                            class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                            Save
-                        </button>
-                        <button type="button" command="close" commandfor="dialog"
-                            class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
-                            Cancel
-                        </button>
+                        <button type="submit" class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Save</button>
+                        <button type="button" command="close" commandfor="dialog" class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">Cancel</button>
                     </div>
                 </form>
 
@@ -374,10 +405,10 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
     </dialog>
 </el-dialog>
 
-<!-- Edit Rule Line Modal -->
-<?php foreach ($rule_lines as $line): ?>
+
+<?php foreach ($transactions as $transaction): ?>
     <el-dialog>
-        <dialog id="edit-dialog-<?= $line['id'] ?>" aria-labelledby="edit-dialog-title-<?= $line['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+        <dialog id="edit-dialog-<?= $transaction['id'] ?>" aria-labelledby="edit-dialog-title-<?= $transaction['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
             <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
 
             <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
@@ -392,46 +423,39 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                                 </svg>
                             </div>
                             <div class="text-left">
-                                <h3 id="edit-dialog-title-<?= $line['id'] ?>" class="text-lg font-semibold text-gray-900">Edit Transaction Rule</h3>
+                                <h3 id="edit-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900">Edit Transaction Rule</h3>
                             </div>
                         </div>
                     </div>
 
                     <!-- Edit Account Form -->
-                    <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                        <input type="hidden" name="id" value="<?= ($line['id']) ?>">
-                        <input type="hidden" name="action" value="update_rule_line">
+                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                        <input type="hidden" name="id" value="<?= ($transaction['id']) ?>">
+                        <input type="hidden" name="action" value="update_rule">
 
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
-                            <select name="rule_id"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose a Rule--</option>
-                                <?php foreach ($rules as $rule): ?>
-                                    <option value="<?= $rule['id'] ?>" <?= $line['rule_id'] == $rule['id'] ? 'selected' : '' ?>><?= $rule['rule_name'] ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
+                            <input type="text" name="rule_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
                         </div>
 
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                            <select name="account_id[]"
+                            <label class="block text-sm text-gray-700 mb-1">Category</label>
+                            <select name="category"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose an Account--</option>
-                                <?php foreach ($accounts as $account): ?>
-                                    <option value="<?= $account['id'] ?>" <?= $line['account_id'] == $account['id'] ? 'selected' : '' ?>><?= $account['account_name'] ?></option>
-                                <?php endforeach; ?>
+                                <option value="">--Choose a Category--</option>
+                                <option value="General" <?= $transaction['category'] == 'General' ? 'selected' : '' ?>>General</option>
+                                <option value="Invoice" <?= $transaction['category'] == 'Invoice' ? 'selected' : '' ?>>Invoice</option>
+                                <option value="Payment" <?= $transaction['category'] == 'Payment' ? 'selected' : '' ?>>Payment</option>
+                                <option value="Purchase" <?= $transaction['category'] == 'Purchase' ? 'selected' : '' ?>>Purchase</option>
                             </select>
                         </div>
 
+
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
-                            <select name="entry_type[]"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose an Entry Type--</option>
-                                <option value="debit" <?= $line['entry_type'] == 'debit' ? 'selected' : '' ?>>Debit</option>
-                                <option value="credit" <?= $line['entry_type'] == 'credit' ? 'selected' : '' ?>>Credit</option>
-                            </select>
+                            <label class="block text-sm text-gray-700 mb-1">Description</label>
+                            <textarea name="description" placeholder="Enter a Description for the Account"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($transaction['description']) ?></textarea>
                         </div>
 
                         <!-- Buttons -->
@@ -440,7 +464,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                                 class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                                 Update
                             </button>
-                            <button type="button" command="close" commandfor="edit-dialog-<?= $line['id'] ?>"
+                            <button type="button" command="close" commandfor="edit-dialog-<?= $transaction['id'] ?>"
                                 class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
                                 Cancel
                             </button>
@@ -453,10 +477,10 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
     </el-dialog>
 <?php endforeach; ?>
 
-<!-- Delete Rule Line Modal -->
-<?php foreach ($rule_lines as $line): ?>
+<!-- Delete Account Modal -->
+<?php foreach ($transactions as $transaction): ?>
     <el-dialog>
-        <dialog id="delete-dialog-<?= $line['id'] ?>" aria-labelledby="delete-dialog-title-<?= $line['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+        <dialog id="delete-dialog-<?= $transaction['id'] ?>" aria-labelledby="delete-dialog-title-<?= $transaction['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
             <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
 
             <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
@@ -471,18 +495,18 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                                 </svg>
                             </div>
                             <div class="text-left">
-                                <h3 id="delete-dialog-title-<?= $line['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Transaction Rule Line</h3>
+                                <h3 id="delete-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Transaction Rule</h3>
                                 <p class="mt-2 text-sm text-gray-600">
-                                    Are you sure you want to delete <span class="font-semibold"><?= ($line['rule_name']) ?></span>? This action cannot be undone.
+                                    Are you sure you want to delete <span class="font-semibold"><?= ($transaction['rule_name']) ?></span>? This action cannot be undone.
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Delete Form -->
-                    <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4">
-                        <input type="hidden" name="action" value="delete_rule_line">
-                        <input type="hidden" name="id" value="<?= $line['id'] ?>">
+                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4">
+                        <input type="hidden" name="action" value="delete_rule">
+                        <input type="hidden" name="id" value="<?= $transaction['id'] ?>">
                         <input type="hidden" name="page" value="<?= $page ?>">
 
                         <!-- Buttons -->
@@ -491,7 +515,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                                 class="inline-flex justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
                                 Delete
                             </button>
-                            <button type="button" command="close" commandfor="delete-dialog-<?= $line['id'] ?>"
+                            <button type="button" command="close" commandfor="delete-dialog-<?= $transaction['id'] ?>"
                                 class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
                                 Cancel
                             </button>
@@ -504,26 +528,60 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
     </el-dialog>
 <?php endforeach; ?>
 
-
-<!-- Scripts for Dynamic Line Entries -->
 <script>
-    document.getElementById('add-line').addEventListener('click', function() {
-        const container = document.getElementById('line-entries');
-        const newLine = container.firstElementChild.cloneNode(true);
+    document.getElementById('rule_id').addEventListener('change', function() {
+        const ruleId = this.value;
+        const display = document.getElementById('rule-lines-display');
 
+        // Clear previous inputs
+        display.innerHTML = '';
 
-        newLine.querySelectorAll('select').forEach(select => select.value = '');
-        container.appendChild(newLine);
-    });
+        if (!ruleId) return;
 
-    document.addEventListener('click', function(e) {
-        const removeBtn = e.target.closest('.remove-line');
-        if (removeBtn) {
-            const lines = document.querySelectorAll('.line-entry');
-            if (lines.length > 1) removeBtn.closest('.line-entry').remove();
-        }
+        fetch('../ajax/getrulelines.php', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    rule_id: ruleId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.length) {
+                    display.textContent = 'No lines found';
+                    return;
+                }
+
+                data.forEach((line, i) => {
+                    display.innerHTML += `
+                <div class="flex gap-4 mb-2 items-end pb-2">
+                    <!-- Account Name -->
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-sm text-gray-700 mb-1">Account Name</label>
+                        <input type="text" value="${line.account_name}" disabled readonly
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
+                        <input type="hidden" name="account_ids[${i}]" value="${line.account_id}">
+                    </div>
+
+                    <!-- Entry Type -->
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
+                        <input type="text" value="${line.entry_type}" readonly disabled
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-sm text-gray-700 mb-1">Amount</label>
+                        <input type="number" placeholder="0.00" min="0" name="amounts[${line.account_id}]" step="0.01"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                    </div>
+                </div>
+            `;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                display.textContent = 'Error fetching data';
+            });
     });
 </script>
-</body>
-
-</html>
