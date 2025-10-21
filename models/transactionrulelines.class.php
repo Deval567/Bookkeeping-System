@@ -17,8 +17,8 @@ class TransactionRuleLines
         $this->entry_type = $entry_type;
     }
     public function getRuleIdRulelinesGroupedByCategory()
-    {
-        $sql = "
+{
+    $sql = "
         SELECT tr.category, tr.id AS rule_id, tr.rule_name, GROUP_CONCAT(trl.id ORDER BY trl.id) AS rule_line_ids
         FROM transaction_rule_lines trl
         JOIN transaction_rules tr ON tr.id = trl.rule_id
@@ -26,9 +26,9 @@ class TransactionRuleLines
         ORDER BY tr.category ASC, tr.rule_name ASC
     ";
 
-        $result = mysqli_query($this->conn, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
+    $result = mysqli_query($this->conn, $sql);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
 
     public function getTotalRuleLines($search = '', $entry_type = '', $rule_id = '')
     {

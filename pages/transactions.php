@@ -7,7 +7,7 @@ require_once "../configs/dbc.php";
 require_once "../models/transactions.class.php";
 require_once "../models/transactionrulelines.class.php";
 
-$transactionModel = new Transaction($conn, null, null, null, null, null, null);
+$transactionModel = new Transaction($conn, null, null, null, null, null, null, null);
 $transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null, null);
 
 
@@ -54,13 +54,13 @@ $queryParams = '&' . http_build_query([
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
             </svg>
 
-            <span>Add New Rule Line</span>
+            <span>Add New Transaction</span>
         </button>
     </div>
 
     <?php
     // Determine success message position
-    $successBottom = isset($_SESSION['transactionrulelines_errors']) ? 'bottom-20' : 'bottom-4';
+    $successBottom = isset($_SESSION['success_message']) ? 'bottom-20' : 'bottom-4';
     ?>
 
     <!-- Success Message -->
@@ -86,7 +86,7 @@ $queryParams = '&' . http_build_query([
     <?php endif; ?>
 
     <!-- Error Message -->
-    <?php if (isset($_SESSION['transactionrulelines_errors'])): ?>
+    <?php if (isset($_SESSION['transaction_errors'])): ?>
         <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
             <div class="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 shadow-lg">
                 <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
@@ -95,7 +95,7 @@ $queryParams = '&' . http_build_query([
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <?php foreach ($_SESSION['transactionrulelines_errors'] as $error): ?>
+                    <?php foreach ($_SESSION['transaction_errors'] as $error): ?>
                         <p class="text-sm font-medium text-red-800"><?= $error; ?></p>
                     <?php endforeach; ?>
                 </div>
@@ -106,7 +106,7 @@ $queryParams = '&' . http_build_query([
                 </button>
             </div>
         </div>
-        <?php unset($_SESSION['transactionrulelines_errors']); ?>
+        <?php unset($_SESSION['transaction_errors']); ?>
     <?php endif; ?>
 
     <!-- Search and Filter Form -->
@@ -131,7 +131,7 @@ $queryParams = '&' . http_build_query([
             </div>
 
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Filter by Username</label>
+                <label class="block text-sm text-gray-700 mb-1">Filter by Encoder</label>
                 <select
                     name="username"
                     onchange="this.form.submit()"
@@ -176,7 +176,7 @@ $queryParams = '&' . http_build_query([
                         type="text"
                         name="search"
                         value="<?= $_GET['search'] ?? '' ?>"
-                        placeholder="Search rule name, account name, or entry type ..."
+                        placeholder="Search rule name, rule name, or transaction details ..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
             </div>
@@ -214,7 +214,7 @@ $queryParams = '&' . http_build_query([
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Date</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Rule Name</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Reference Number #</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Details</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Total Amount</th>
                     <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Encoded By</th>
                     <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
@@ -337,8 +337,8 @@ $queryParams = '&' . http_build_query([
                 </div>
 
                 <!-- Form -->
-                <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                    <input type="hidden" name="action" value="add_rule_lines">
+                <form action="../controllers/transactions.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                    <input type="hidden" name="action" value="add_transaction">
 
                     <!-- 4-column grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -353,7 +353,7 @@ $queryParams = '&' . http_build_query([
                                     if ($line['category'] !== $currentCategory):
                                         $currentCategory = $line['category'];
                                 ?>
-                                        <option disabled class="text-gray-400 cursor-default"><?= htmlspecialchars($currentCategory) ?></option>
+                                        <option disabled class="text-gray-400 cursor-default">[---<?= htmlspecialchars($currentCategory) ?> Category---]</option>
                                     <?php endif; ?>
                                     <option value="<?= $line['rule_id'] ?>"><?= htmlspecialchars($line['rule_name']) ?></option>
                                 <?php endforeach; ?>
@@ -379,14 +379,14 @@ $queryParams = '&' . http_build_query([
                         </div>
                     </div>
 
-                    <!-- Description -->
+                    <!-- Transaction Details -->
                     <div>
-                        <label class="block text-sm text-gray-700 mb-1">Description</label>
+                        <label class="block text-sm text-gray-700 mb-1">Transaction Details</label>
                         <textarea name="description" placeholder="Add a description for the transaction" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
                     </div>
 
                     <!-- Rule Lines Display -->
-                    <div  class="mt-4">
+                    <div class="mt-4">
                         <h3 class="text-md font-semibold text-gray-900 mb-2">Transaction Rule Lines</h3>
                         <div id="rule-lines-display">
 
@@ -409,10 +409,13 @@ $queryParams = '&' . http_build_query([
 <?php foreach ($transactions as $transaction): ?>
     <el-dialog>
         <dialog id="edit-dialog-<?= $transaction['id'] ?>" aria-labelledby="edit-dialog-title-<?= $transaction['id'] ?>" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
-            <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
+            <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity
+            data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out
+            data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
 
             <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
-                <el-dialog-panel class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all">
+                <el-dialog-panel class="relative w-full max-w-6xl transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all
+                data-enter:duration-300 data-leave:duration-200 data-enter:ease-out data-leave:ease-in">
 
                     <!-- Header -->
                     <div class="px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -423,51 +426,73 @@ $queryParams = '&' . http_build_query([
                                 </svg>
                             </div>
                             <div class="text-left">
-                                <h3 id="edit-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900">Edit Transaction Rule</h3>
+                                <h3 id="edit-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900 pt-2">Edit Transaction</h3>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Edit Account Form -->
-                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4 space-y-4">
-                        <input type="hidden" name="id" value="<?= ($transaction['id']) ?>">
-                        <input type="hidden" name="action" value="update_rule">
+                    <!-- Edit Transaction Form -->
+                    <form action="../controllers/transactions.controller.php" method="POST" class="px-6 pb-4 space-y-4">
+                        <input type="hidden" name="id" value="<?= $transaction['id'] ?>">
+                        <input type="hidden" name="action" value="update_transaction">
 
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
-                            <input type="text" name="rule_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
+                        <!-- 4-column grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Rule Name -->
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                                <select id="rule_id_<?= $transaction['id'] ?>" name="rule_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                                    <option value="">--All Rule Names--</option>
+                                    <?php
+                                    $currentCategory = '';
+                                    foreach ($all_lines as $line):
+                                        if ($line['category'] !== $currentCategory):
+                                            $currentCategory = $line['category'];
+                                    ?>
+                                            <option disabled class="text-gray-400 cursor-default">[--<?= htmlspecialchars($currentCategory) ?> Category--]</option>
+                                        <?php endif; ?>
+                                        <option value="<?= $line['rule_id'] ?>"
+                                            <?= (isset($transaction['rule_id']) && $transaction['rule_id'] == $line['rule_id']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($line['rule_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <!-- Transaction Date -->
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Transaction Date</label>
+                                <input type="date" name="transaction_date" value="<?= $transaction['transaction_date'] ?>" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            </div>
+
+                            <!-- Reference Number -->
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Reference Number #</label>
+                                <input type="text" name="reference_no" value="<?= $transaction['reference_no'] ?>" placeholder="Enter Reference Number" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            </div>
+
+                            <!-- Total Amount -->
+                            <div>
+                                <label class="block text-sm text-gray-700 mb-1">Total Amount</label>
+                                <input type="number" name="total_amount" value="<?= $transaction['total_amount'] ?>" min="0" step="0.01" placeholder="0.00" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            </div>
                         </div>
 
+                        <!-- Transaction Details -->
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Category</label>
-                            <select name="category"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose a Category--</option>
-                                <option value="General" <?= $transaction['category'] == 'General' ? 'selected' : '' ?>>General</option>
-                                <option value="Invoice" <?= $transaction['category'] == 'Invoice' ? 'selected' : '' ?>>Invoice</option>
-                                <option value="Payment" <?= $transaction['category'] == 'Payment' ? 'selected' : '' ?>>Payment</option>
-                                <option value="Purchase" <?= $transaction['category'] == 'Purchase' ? 'selected' : '' ?>>Purchase</option>
-                            </select>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Details</label>
+                            <textarea name="description" placeholder="Add a description for the transaction" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"><?= $transaction['description'] ?></textarea>
                         </div>
 
-
-                        <div>
-                            <label class="block text-sm text-gray-700 mb-1">Description</label>
-                            <textarea name="description" placeholder="Enter a Description for the Account"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($transaction['description']) ?></textarea>
+                        <!-- Rule Lines Display -->
+                        <div class="mt-4">
+                            <h3 class="text-md font-semibold text-gray-900 mb-2">Transaction Rule Lines</h3>
+                            <div id="rule-lines-display-<?= $transaction['id'] ?>"></div>
                         </div>
 
                         <!-- Buttons -->
                         <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
-                            <button type="submit"
-                                class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                                Update
-                            </button>
-                            <button type="button" command="close" commandfor="edit-dialog-<?= $transaction['id'] ?>"
-                                class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
-                                Cancel
-                            </button>
+                            <button type="submit" class="inline-flex justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Update</button>
+                            <button type="button" command="close" commandfor="edit-dialog-<?= $transaction['id'] ?>" class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">Cancel</button>
                         </div>
                     </form>
 
@@ -504,8 +529,8 @@ $queryParams = '&' . http_build_query([
                     </div>
 
                     <!-- Delete Form -->
-                    <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4">
-                        <input type="hidden" name="action" value="delete_rule">
+                    <form action="../controllers/transactions.controller.php" method="POST" class="px-6 pb-4">
+                        <input type="hidden" name="action" value="delete_transaction">
                         <input type="hidden" name="id" value="<?= $transaction['id'] ?>">
                         <input type="hidden" name="page" value="<?= $page ?>">
 
@@ -527,61 +552,110 @@ $queryParams = '&' . http_build_query([
         </dialog>
     </el-dialog>
 <?php endforeach; ?>
-
 <script>
-    document.getElementById('rule_id').addEventListener('change', function() {
-        const ruleId = this.value;
-        const display = document.getElementById('rule-lines-display');
+    document.addEventListener('DOMContentLoaded', () => {
 
-        // Clear previous inputs
-        display.innerHTML = '';
+        function fetchRuleLines(ruleId, display, transactionId = null) {
+            display.innerHTML = '<p class="text-gray-500 text-sm">Loading...</p>';
 
-        if (!ruleId) return;
+            if (!ruleId) {
+                display.innerHTML = '';
+                return;
+            }
 
-        fetch('../ajax/getrulelines.php', {
-                method: 'POST',
-                body: new URLSearchParams({
-                    rule_id: ruleId
+            const formData = new FormData();
+            formData.append('rule_id', ruleId);
+
+            if (transactionId) {
+                formData.append('transaction_id', transactionId);
+            }
+
+            fetch('../ajax/getrulelines.php', {
+                    method: 'POST',
+                    body: formData
                 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.length) {
-                    display.textContent = 'No lines found';
-                    return;
-                }
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        display.innerHTML = `<p class="text-red-500 text-sm">Error: ${data.error}</p>`;
+                        return;
+                    }
 
-                data.forEach((line, i) => {
-                    display.innerHTML += `
-                <div class="flex gap-4 mb-2 items-end pb-2">
-                    <!-- Account Name -->
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                        <input type="text" value="${line.account_name}" disabled readonly
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
-                        <input type="hidden" name="account_ids[${i}]" value="${line.account_id}">
-                    </div>
+                    if (!data.length) {
+                        display.innerHTML = '<p class="text-gray-500 text-sm">No lines found</p>';
+                        return;
+                    }
 
-                    <!-- Entry Type -->
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
-                        <input type="text" value="${line.entry_type}" readonly disabled
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
-                    </div>
+                    display.innerHTML = '';
 
-                    <!-- Amount -->
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-sm text-gray-700 mb-1">Amount</label>
-                        <input type="number" placeholder="0.00" min="0" name="amounts[${line.account_id}]" step="0.01"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                    </div>
-                </div>
-            `;
+                    data.forEach(line => {
+                        const accountId = line.account_id ?? '';
+                        const accountName = line.account_name ?? '';
+                        const entryType = line.entry_type ?? '';
+                        const amount = line.amount ?? '';
+
+                        const lineHTML = `
+                    <div class="flex gap-4 mb-2 items-end pb-2 border-b border-gray-200">
+                        <!-- Account Name -->
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm text-gray-700 mb-1">Account Name</label>
+                            <input type="text" value="${accountName}" disabled readonly
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
+                            <input type="hidden" name="account_ids[]" value="${accountId}">
+                        </div>
+
+                        <!-- Entry Type -->
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
+                            <input type="hidden" name="entry_types[]" value="${entryType}">
+                            <input type="text" value="${entryType}" readonly disabled
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="flex-1 min-w-[150px]">
+                            <label class="block text-sm text-gray-700 mb-1">Amount</label>
+                            <input type="number" placeholder="0.00" min="0" name="amounts[]" step="0.01"
+                                value="${amount}"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                        </div>
+                    </div>`;
+
+                        display.innerHTML += lineHTML;
+                    });
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    display.innerHTML = '<p class="text-red-500 text-sm">Error fetching data</p>';
                 });
-            })
-            .catch(err => {
-                console.error(err);
-                display.textContent = 'Error fetching data';
+        }
+
+        // Handle ADD modal
+        const addRuleSelect = document.getElementById('rule_id');
+        const addDisplay = document.getElementById('rule-lines-display');
+
+        if (addRuleSelect && addDisplay) {
+            addRuleSelect.addEventListener('change', () => {
+                fetchRuleLines(addRuleSelect.value, addDisplay);
             });
+        }
+
+        // Handle EDIT modals (multiple)
+        document.querySelectorAll('select[id^="rule_id_"]').forEach(select => {
+            const transactionId = select.id.replace('rule_id_', '');
+            const display = document.getElementById('rule-lines-display-' + transactionId);
+
+            if (display) {
+                // Trigger on change
+                select.addEventListener('change', () => {
+                    fetchRuleLines(select.value, display, transactionId);
+                });
+
+                // Load on page load if rule is already selected (for edit modal)
+                if (select.value) {
+                    fetchRuleLines(select.value, display, transactionId);
+                }
+            }
+        });
     });
 </script>
