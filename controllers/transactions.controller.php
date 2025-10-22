@@ -50,7 +50,7 @@ switch ($action) {
                 $entry_type = $entry_types[$index];
                 $amount = $amounts[$index];
                 $accountName = $chartofAcc->getAccountNameById($account_id);
-                $createdJournal = $journal_entries->createJournalEntry($createdTransaction, $account_id, $entry_type, $amount, $description);
+                $createdJournal = $journal_entries->createJournalEntry($createdTransaction, $account_id, $entry_type, $amount, $description, $transaction_date);
 
                 if (!$createdJournal) {
                     $_SESSION['transaction_errors'] = ["Failed to add journal entry for account ", $accountName . "Please try again."];
@@ -109,7 +109,7 @@ switch ($action) {
                     $entry_type = $entry_types[$index];
                     $amount = $amounts[$index];
 
-                    $updatedJournal = $journal_entries->updateJournalEntry($id, $account_id, $entry_type, $amount, $description);
+                    $updatedJournal = $journal_entries->updateJournalEntry($id, $account_id, $entry_type, $amount, $description, $transaction_date);
 
                     if (!$updatedJournal) {
                         $accountName = $chartofAcc->getAccountNameById($account_id);
@@ -140,7 +140,7 @@ switch ($action) {
                     $entry_type = $entry_types[$index];
                     $amount = $amounts[$index];
 
-                    $createdJournal = $journal_entries->createJournalEntry($id, $account_id, $entry_type, $amount, $description);
+                    $createdJournal = $journal_entries->createJournalEntry($id, $account_id, $entry_type, $amount, $description, $transaction_date);
 
                     if (!$createdJournal) {
                         $accountName = $chartofAcc->getAccountNameById($account_id);

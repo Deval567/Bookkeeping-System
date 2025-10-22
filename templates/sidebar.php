@@ -123,8 +123,8 @@
 
          <ul class="ml-8 mt-2 space-y-1 text-sm">
            <li>
-             <a href="general.transaction.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'General Transactions')
+             <a href="journalentries.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Journal Entries')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
                <span>
