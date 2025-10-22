@@ -25,19 +25,24 @@ class Transaction
         $this->total_amount = $total_amount;
         $this->encoded_by = $encoded_by;
     }
-    public function getTransactionsGroupByRuleName()
-    {
-        $sql = "
-        SELECT t.rule_id, tr.rule_name, GROUP_CONCAT(t.id ORDER BY t.id) AS transaction_ids
+   public function getTransactionsGroupByRuleName()
+{
+    $sql = "
+        SELECT 
+            tr.category,
+            t.rule_id, 
+            tr.rule_name, 
+            GROUP_CONCAT(t.id ORDER BY t.id) AS transaction_ids
         FROM transactions t
         JOIN transaction_rules tr ON tr.id = t.rule_id
-        GROUP BY t.rule_id, tr.rule_name
-        ORDER BY tr.rule_name ASC
+        GROUP BY tr.category, t.rule_id, tr.rule_name
+        ORDER BY tr.category ASC, tr.rule_name ASC
     ";
 
-        $result = mysqli_query($this->conn, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
+    $result = mysqli_query($this->conn, $sql);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
 
     public function getTransactionsGroupedByUser()
     {

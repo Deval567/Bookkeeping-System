@@ -280,7 +280,7 @@ $total_pages = $userModel->getTotalPages($search, $filter);
 
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Password</label>
-                        <input type="password" name="password" type placeholder="Enter a Password"
+                        <input type="text" name="password" type placeholder="Enter a Password"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></input>
                     </div>
 
@@ -348,7 +348,7 @@ $total_pages = $userModel->getTotalPages($search, $filter);
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Password</label>
-                            <input type="password" name="password" placeholder="Enter a New Password" value="<?= htmlspecialchars($user['password']) ?>"
+                            <input type="text" name="password" placeholder="Enter a New Password" value="<?= htmlspecialchars($user['password']) ?>"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></input>
                         </div>
 

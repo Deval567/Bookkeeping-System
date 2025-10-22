@@ -162,7 +162,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-red-700 text-white">
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Rule Name</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Name</th>
                     <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Category</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
                     <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
@@ -287,8 +287,8 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
                 <form action="../controllers/transactionrules.controller.php" method="POST" class="px-6 pb-4 space-y-4">
                     <input type="hidden" name="action" value="add_rule">
                     <div>
-                        <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
-                        <input type="text" name="rule_name" placeholder="Enter a Transaction Rule Name"
+                        <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
+                        <input type="text" name="rule_name" placeholder="Enter a Transaction Name"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" />
                     </div>
 
@@ -307,7 +307,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
 
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Description</label>
-                        <textarea name="description" placeholder="Enter a Description for the Account"
+                        <textarea name="description" placeholder="Enter a Description for the Transaction Rule"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
                     </div>
 
@@ -358,7 +358,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
                         <input type="hidden" name="action" value="update_rule">
 
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Transaction Rule Name</label>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
                             <input type="text" name="rule_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
                         </div>

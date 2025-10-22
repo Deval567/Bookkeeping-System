@@ -73,7 +73,9 @@ $queryParams = '&' . http_build_query([
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-green-800"><?= $_SESSION['success_message']; ?></p>
+                    <?php foreach ($_SESSION['success_message'] as $message): ?>
+                        <p class="text-sm font-medium text-green-800"><?= $message; ?></p>
+                    <?php endforeach; ?>
                 </div>
                 <button onclick="this.parentElement.parentElement.remove()" class="text-green-600 hover:text-green-800">
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -116,20 +118,31 @@ $queryParams = '&' . http_build_query([
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Filter by Rule Name</label>
+                <label class="block text-sm text-gray-700 mb-1">Filter by Transaction Name</label>
                 <select
                     name="rule_id"
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--All Rule Names--</option>
-                    <?php foreach ($all_rule_names as $name): ?>
-                        <option value="<?= $name['rule_id'] ?>" <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $name['rule_id']) ? 'selected' : '' ?>>
+
+                    <option value="">--All Transaction Names--</option>
+
+                    <?php
+                    $currentCategory = '';
+                    foreach ($all_rule_names as $name):
+                        if ($name['category'] !== $currentCategory):
+                            $currentCategory = $name['category'];
+                    ?>
+                            <option disabled class="text-black-700 bg-gray-200 text-center cursor-default">[--<?= htmlspecialchars($currentCategory) ?> Category--]</option>
+                        <?php endif; ?>
+
+                        <option value="<?= $name['rule_id'] ?>"
+                            <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $name['rule_id']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($name['rule_name']) ?>
                         </option>
                     <?php endforeach; ?>
+
                 </select>
             </div>
-
             <div class="sm:w-48">
                 <label class="block text-sm text-gray-700 mb-1">Filter by Encoder</label>
                 <select
@@ -176,7 +189,7 @@ $queryParams = '&' . http_build_query([
                         type="text"
                         name="search"
                         value="<?= $_GET['search'] ?? '' ?>"
-                        placeholder="Search rule name, rule name, or transaction details ..."
+                        placeholder="Search transaction name, reference number#, or transaction details ..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
             </div>
@@ -206,13 +219,13 @@ $queryParams = '&' . http_build_query([
 
         </form>
     </div>
-    <!-- Rule Lines Table -->
+    <!-- Transactions Table -->
     <div class=" rounded-lg shadow">
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-red-700 text-white">
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Date</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Rule Name</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Name</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Reference Number #</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Details</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Total Amount</th>
@@ -342,11 +355,11 @@ $queryParams = '&' . http_build_query([
 
                     <!-- 4-column grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <!-- Rule Name -->
+                        <!-- Transaction Name -->
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
                             <select id="rule_id" name="rule_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                                <option value="">--All Rule Names--</option>
+                                <option value="">--All Transaction Names--</option>
                                 <?php
                                 $currentCategory = '';
                                 foreach ($all_lines as $line):
@@ -387,7 +400,7 @@ $queryParams = '&' . http_build_query([
 
                     <!-- Rule Lines Display -->
                     <div class="mt-4">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Transaction Rule Lines</h3>
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
                         <div id="rule-lines-display">
 
                         </div>
@@ -438,11 +451,11 @@ $queryParams = '&' . http_build_query([
 
                         <!-- 4-column grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <!-- Rule Name -->
+                            <!-- Transaction Name -->
                             <div>
-                                <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                                <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
                                 <select id="rule_id_<?= $transaction['id'] ?>" name="rule_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                                    <option value="">--All Rule Names--</option>
+                                    <option value="">--All Transaction Names--</option>
                                     <?php
                                     $currentCategory = '';
                                     foreach ($all_lines as $line):
@@ -485,7 +498,7 @@ $queryParams = '&' . http_build_query([
 
                         <!-- Rule Lines Display -->
                         <div class="mt-4">
-                            <h3 class="text-md font-semibold text-gray-900 mb-2">Transaction Rule Lines</h3>
+                            <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
                             <div id="rule-lines-display-<?= $transaction['id'] ?>"></div>
                         </div>
 

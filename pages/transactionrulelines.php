@@ -104,20 +104,20 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
 
             <!-- Filter Dropdown -->
             <div class="sm:w-48">
-                <label class="block text-sm text-gray-700 mb-1">Filter by Rule Name</label>
+                <label class="block text-sm text-gray-700 mb-1">Filter by Transaction Name</label>
                 <select
                     name="rule_id"
                     onchange="this.form.submit()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                    <option value="">--All Rule Names--</option>
+                    <option value="">--All Transaction Names--</option>
                     <?php
                     $currentCategory = '';
                     foreach ($all_lines as $line):
                         if ($line['category'] !== $currentCategory):
                             $currentCategory = $line['category'];
                     ?>
-                            <option disabled class="bg-gray-300 text-gray-700 cursor-default">
-                                <?= htmlspecialchars($currentCategory) ?>
+                            <option disabled class="bg-gray-300 text-center text-gray-700 cursor-default">
+                                [--<?= htmlspecialchars($currentCategory) ?> Category--]
                             </option>
                         <?php endif; ?>
                         <option value="<?= $line['rule_id'] ?>" <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $line['rule_id']) ? 'selected' : '' ?>>
@@ -185,7 +185,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
                 <tr class="bg-red-700 text-white">
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Rule Name</th>
+                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Name</th>
                     <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Account Name</th>
                     <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Entry Type</th>
                     <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
@@ -305,27 +305,58 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                 <form action="../controllers/transactionrulelines.controller.php" method="POST" class="px-6 pb-4 space-y-4">
                     <input type="hidden" name="action" value="add_rule_lines">
 
-                    <!-- Rule Name -->
+                    <!-- Transaction Name -->
                     <div>
-                        <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                        <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
                         <select name="rule_id"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none ">
-                            <option value="">Select a Transaction Rule</option>
-                            <?php foreach ($rules as $rule): ?>
-                                <option value="<?= $rule['id']; ?>"><?= $rule['rule_name']; ?></option>
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            <option value="">Select a Transaction Name</option>
+
+                            <?php
+                            $currentCategory = '';
+                            foreach ($rules as $rule):
+                                if ($rule['category'] !== $currentCategory):
+                                    $currentCategory = $rule['category'];
+                            ?>
+                                    <!-- Category Header -->
+                                    <option disabled class="bg-gray-300 text-center text-gray-700 cursor-default">
+                                        [--<?= htmlspecialchars($currentCategory) ?> Category--]
+                                    </option>
+                                <?php endif; ?>
+
+                                <!-- Rule Option -->
+                                <option value="<?= $rule['id']; ?>">
+                                    <?= htmlspecialchars($rule['rule_name']); ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Dynamic container -->
                     <div id="line-entries" class="space-y-2">
                         <div class="line-entry flex gap-4 items-center">
                             <div class="flex-1">
                                 <label class="block text-sm text-gray-700 mb-1">Account Name</label>
                                 <select name="account_id[]" class="w-full border border-gray-300 rounded-md px-3 py-2">
-                                    <option value="">Select an Account</option>
-                                    <?php foreach ($accounts as $account): ?>
-                                        <option value="<?= $account['id']; ?>"><?= $account['account_name']; ?></option>
+                                    <option value="">--Select an Account--</option>
+
+                                    <?php
+                                    $currentCategory = '';
+                                    foreach ($accounts as $account):
+                                        if (!isset($account['account_type'], $account['id'], $account['account_name'])) continue;
+
+                                        if ($account['account_type'] !== $currentCategory):
+                                            $currentCategory = $account['account_type'];
+                                    ?>
+                                            <!-- Category Header -->
+                                            <option disabled class="bg-gray-200 text-gray-700 text-center cursor-default">
+                                                [-- <?= htmlspecialchars($currentCategory) ?> Accounts --]
+                                            </option>
+                                        <?php endif; ?>
+
+                                        <!-- Account Option -->
+                                        <option value="<?= $account['id']; ?>">
+                                            <?= htmlspecialchars($account['account_name']); ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -403,12 +434,30 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                         <input type="hidden" name="action" value="update_rule_line">
 
                         <div>
-                            <label class="block text-sm text-gray-700 mb-1">Rule Name</label>
+                            <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
                             <select name="rule_id"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose a Rule--</option>
-                                <?php foreach ($rules as $rule): ?>
-                                    <option value="<?= $rule['id'] ?>" <?= $line['rule_id'] == $rule['id'] ? 'selected' : '' ?>><?= $rule['rule_name'] ?></option>
+                                <option value="">--Select a Transaction Name--</option>
+
+                                <?php
+                                $currentCategory = '';
+                                foreach ($rules as $rule):
+                                    // Prevent "undefined index" errors
+                                    if (!isset($rule['id']) || !isset($rule['rule_name']) || !isset($rule['category'])) continue;
+
+                                    // If new category, print a header
+                                    if ($rule['category'] !== $currentCategory):
+                                        $currentCategory = $rule['category'];
+                                ?>
+                                        <option disabled class="bg-gray-200 text-gray-700 text-center">
+                                            [-- <?= htmlspecialchars($currentCategory) ?> Category --]
+                                        </option>
+                                    <?php endif; ?>
+
+                                    <option value="<?= $rule['id'] ?>"
+                                        <?= (isset($line['rule_id']) && $line['rule_id'] == $rule['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($rule['rule_name']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -417,9 +466,25 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                             <label class="block text-sm text-gray-700 mb-1">Account Name</label>
                             <select name="account_id[]"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose an Account--</option>
-                                <?php foreach ($accounts as $account): ?>
-                                    <option value="<?= $account['id'] ?>" <?= $line['account_id'] == $account['id'] ? 'selected' : '' ?>><?= $account['account_name'] ?></option>
+                                <option value="">--Select an Account--</option>
+
+                                <?php
+                                $currentType = '';
+                                foreach ($accounts as $account):
+                                    if (!isset($account['account_type'], $account['id'], $account['account_name'])) continue;
+
+                                    if ($account['account_type'] !== $currentType):
+                                        $currentType = $account['account_type'];
+                                ?>
+                                        <option disabled class="bg-gray-200 text-gray-700 text-center cursor-default">
+                                            [-- <?= htmlspecialchars($currentType) ?> Accounts --]
+                                        </option>
+                                    <?php endif; ?>
+
+                                    <option value="<?= $account['id'] ?>"
+                                        <?= isset($line['account_id']) && $line['account_id'] == $account['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($account['account_name']) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -428,7 +493,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                             <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
                             <select name="entry_type[]"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
-                                <option value="">--Choose an Entry Type--</option>
+                                <option value="">--Select an Entry Type--</option>
                                 <option value="debit" <?= $line['entry_type'] == 'debit' ? 'selected' : '' ?>>Debit</option>
                                 <option value="credit" <?= $line['entry_type'] == 'credit' ? 'selected' : '' ?>>Credit</option>
                             </select>
