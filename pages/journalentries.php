@@ -67,7 +67,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             </div>
 
             <!-- Clear / Search buttons -->
-            <div class="flex gap-2 mt-3 sm:mt-0">
+            <div class="flex gap-2 pt-5 sm:mt-0">
                 <button type="submit"
                     class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-200 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
@@ -152,23 +152,33 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
     <!-- Pagination -->
     <div class="flex justify-center my-4 space-x-2 pb-4">
         <?php if ($page > 1): ?>
-            <a href="?page=<?= $page - 1 ?>&<?= $queryParams ?>"
+            <a href="?page=<?= $page - 1 . $queryParams ?>"
                 class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                Prev
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+                <span>Prev</span>
             </a>
         <?php endif; ?>
 
         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <a href="?page=<?= $i ?>&<?= $queryParams ?>"
+            <a href="?page=<?= $i . $queryParams ?>"
                 class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
                 <?= $i ?>
             </a>
         <?php endfor; ?>
 
         <?php if ($page < $total_pages): ?>
-            <a href="?page=<?= $page + 1 ?>&<?= $queryParams ?>"
+            <a href="?page=<?= $page + 1 . $queryParams ?>"
                 class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                Next
+                <span>Next</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
             </a>
         <?php endif; ?>
     </div>

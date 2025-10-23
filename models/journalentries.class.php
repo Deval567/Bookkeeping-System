@@ -81,7 +81,7 @@ class JournalEntries
         FROM journal_entries AS je
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         $filterQuery
-        ORDER BY je.date ASC, je.transaction_id ASC
+        ORDER BY je.date DESC
         LIMIT {$this->limit} OFFSET {$offset}
     ";
         $resultIds = mysqli_query($this->conn, $sqlIds);
@@ -102,7 +102,7 @@ class JournalEntries
         FROM journal_entries AS je
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         WHERE je.transaction_id IN ($ids)
-        ORDER BY je.date ASC, je.transaction_id ASC, je.id ASC
+        ORDER BY je.date DESC
     ";
         $result = mysqli_query($this->conn, $sql);
         $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
