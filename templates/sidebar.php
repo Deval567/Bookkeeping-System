@@ -1,18 +1,19 @@
  <!-- Sidebar -->
- <aside class="row-span-2 w-64 bg-white border-r border-gray-500 shadow-md flex flex-col">
+ <aside class="row-span-2 w-64 bg-white border-r border-gray-500 shadow-md flex flex-col z-10">
 
    <!-- User Info -->
    <div class="px-6 py-3 flex items-center justify-between border-b">
      <div>
        <p class="text-md opacity-80">Logged in as: <span class="font-semibold"><?php echo $_SESSION['username']; ?></span></p>
-       <p class="text-md">Role: <span class="font-semibold"><?php
-                                                            $role = $_SESSION['role'];
-                                                            $roleStyles = [
-                                                              'Admin' => 'bg-red-100 text-red-700',
-                                                              'Staff' => 'bg-blue-100 text-blue-700',
-                                                            ];
-                                                            $style = $roleStyles[$_SESSION['role']] ?? 'bg-gray-100 text-gray-700';
-                                                            ?>
+       <p class="text-md">Role: <span class="font-semibold">
+           <?php
+            $role = $_SESSION['role'];
+            $roleStyles = [
+              'Admin' => 'bg-red-100 text-red-700',
+              'Staff' => 'bg-blue-100 text-blue-700',
+            ];
+            $style = $roleStyles[$_SESSION['role']] ?? 'bg-gray-100 text-gray-700';
+            ?>
            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
              <?= $role ?></p>
      </div>
@@ -138,8 +139,8 @@
 
 
            <li>
-             <a href="#" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'Invoices')
+             <a href="generalledger.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'General Ledger')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
                <span>
@@ -148,6 +149,20 @@
                  </svg>
                </span>
                General Ledger
+             </a>
+           </li>
+
+           <li>
+             <a href="trialbalance.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Trial Balance')
+                ? 'bg-red-50 text-red-700 font-semibold'
+                : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
+               <span>
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="m9 14.25 6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                 </svg>
+               </span>
+               Trial Balance
              </a>
            </li>
          </ul>

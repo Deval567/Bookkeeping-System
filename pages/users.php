@@ -15,7 +15,7 @@ $queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($filter)
 $users = $userModel->getPaginatedUsers($page, $search, $filter);
 $total_pages = $userModel->getTotalPages($search, $filter);
 ?>
-<main class="g-gray-100 px-6 py-2">
+<main class="bg-gray-100 px-6 py-4">
     <div>
         <h2 class="text-2xl font-semibold"><?php echo $title ?></h2>
         <p class="text-gray-600">Manage user accounts here.</p>
@@ -88,7 +88,7 @@ $total_pages = $userModel->getTotalPages($search, $filter);
     ?>
 
     <!-- Search and Filter Form -->
-    <div class="bg-white  p-4 mb-4">
+     <div class="bg-white p-4 mb-4 rounded shadow">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
 

@@ -1,5 +1,5 @@
 <?php
-$title = "Journal Entries";
+$title = "General Ledger";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
@@ -12,8 +12,8 @@ $search = $_GET['search'] ?? '';
 $month = $_GET['month'] ?? '';
 $year = $_GET['year'] ?? '';
 
-$journalEntries = $entry->getPaginatedJournalEntries($page, $search, $month, $year);
-$total_pages = $entry->getTotalJournalPages($search, $month, $year);
+$generalLedger = $entry->getPaginatedGeneralLedger($page, $search, $month, $year);
+$total_pages = $entry->getTotalLedgerPages($search, $month, $year);
 
 $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) . '&year=' . urlencode($year);
 ?>
@@ -21,10 +21,8 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
 <main class="bg-gray-100 px-6 py-4">
     <div class="mb-4">
         <h2 class="text-2xl font-semibold"><?= $title ?></h2>
-        <p class="text-gray-600">Manage <?= $title ?> here.</p>
+        <p class="text-gray-600">View account ledgers with running balances.</p>
     </div>
-
-
 
     <!-- Filter Form -->
     <div class="bg-white p-4 mb-4 rounded shadow">
@@ -63,7 +61,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                     </svg>
-                    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search account or description..."
+                    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search account name..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
                 </div>
             </div>
@@ -91,108 +89,155 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
         </form>
     </div>
 
-
-    <!-- Journal Entries Table -->
-    <?php if (empty($journalEntries)): ?>
+    <!-- General Ledger Display -->
+    <?php if (empty($generalLedger)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
-            <p class="text-gray-500 font-semibold">No Journal Entries are found.</p>
+            <p class="text-gray-500 font-semibold">No ledger entries found.</p>
         </div>
     <?php else: ?>
-        <div class="rounded-lg shadow">
-            <table class="min-w-full bg-white border border-gray-200">
-                <thead>
-                    <tr class="bg-red-700 text-white">
-                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Date</th>
-                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Particulars</th>
-                        <th class="py-2 px-4 text-right text-sm font-medium border-r border-red-600">Debit</th>
-                        <th class="py-2 px-4 text-right text-sm font-medium">Credit</th>
-                    </tr>
-                </thead>
+        <?php foreach ($generalLedger as $ledger): ?>
+            <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+                <!-- Account Header -->
+                <div class="bg-white border-b-2 border-gray-300 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <?= htmlspecialchars($ledger['account_name']) ?>
+                            </h3>
+                            <p class="text-gray-500 text-sm mt-1">
+                                <?= htmlspecialchars($ledger['account_type']) ?>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <?php
+                            $finalBalance = end($ledger['entries'])['balance'];
+                            reset($ledger['entries']);
+                            ?>
+                            <p class="text-sm text-gray-500">Current Balance</p>
+                            <p class="text-2xl font-bold <?= $finalBalance < 0 ? 'text-red-600' : 'text-green-600' ?>">
+                                <?= number_format(abs($finalBalance), 2) ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-                <?php foreach ($journalEntries as $je): ?>
+                <!-- Ledger Table -->
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-red-700 text-white">
+                            <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Date</th>
+                            <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Particulars</th>
+                            <th class="py-2 px-4 text-right text-sm font-medium border-r border-red-600">Debit</th>
+                            <th class="py-2 px-4 text-right text-sm font-medium border-r border-red-600">Credit</th>
+                            <th class="py-2 px-4 text-right text-sm font-medium">Balance</th>
+                        </tr>
+                    </thead>
                     <tbody class="group hover:scale-[1.02] hover:bg-gray-100 transition-all duration-200">
-                        <?php
-                        $accounts = $je['accounts'] ?? [];
-                        $maxLines = count($accounts);
-                        ?>
-                        <?php for ($i = 0; $i < $maxLines; $i++): ?>
+                        <?php foreach ($ledger['entries'] as $entry): ?>
                             <tr>
-                                <?php if ($i === 0): ?>
-                                    <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200" rowspan="<?= $maxLines ?>">
-                                        <?= date('Y-m-d', strtotime($je['journal_date'] ?? date('Y-m-d'))) ?>
-                                    </td>
-                                <?php endif; ?>
-
                                 <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
-                                    <?= htmlspecialchars($accounts[$i]['account_name'] ?? '') ?>
+                                    <?= date('Y-m-d', strtotime($entry['date'])) ?>
+                                </td>
+                                <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
+                                    <div class="font-medium">
+                                        <?= htmlspecialchars($entry['transaction_type'] ?? 'General Entry') ?>
+                                        <?php if ($entry['reference_no']): ?>
+                                            <span class="text-gray-500"> - <?= htmlspecialchars($entry['reference_no']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-gray-600 text-xs mt-0.5">
+                                        <?= htmlspecialchars($entry['description']) ?>
+                                    </div>
                                 </td>
                                 <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
-                                    <?= number_format($accounts[$i]['debit'] ?? 0, 2) ?>
+                                    <?= $entry['debit'] > 0 ? number_format($entry['debit'], 2) : '0.00' ?>
+                                </td>
+                                <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
+                                    <?= $entry['credit'] > 0 ? number_format($entry['credit'], 2) : '0.00' ?>
                                 </td>
                                 <td class="py-2 px-4 text-gray-900 font-medium text-right">
-                                    <?= number_format($accounts[$i]['credit'] ?? 0, 2) ?>
+                                    <?= number_format($entry['balance'], 2) ?>
                                 </td>
                             </tr>
-                        <?php endfor; ?>
+                        <?php endforeach; ?>
+                        <!-- Totals Row -->
                         <tr class="bg-gray-50">
-                            <td colspan="4" class="py-1 px-4 text-gray-600 italic">
-                                (<?= htmlspecialchars($je['description'] ?? '') ?>)
+                            <td colspan="2" class="py-2 px-4 text-gray-900 font-bold border-t border-gray-300">
+                                Total for <?= htmlspecialchars($ledger['account_name']) ?>
+                            </td>
+                            <td class="py-2 px-4 text-gray-900 font-bold border-r border-gray-200 border-t border-gray-300 text-right">
+                                <?php
+                                $totalDebit = array_sum(array_column($ledger['entries'], 'debit'));
+                                echo number_format($totalDebit, 2);
+                                ?>
+                            </td>
+                            <td class="py-2 px-4 text-gray-900 font-bold border-r border-gray-200 border-t border-gray-300 text-right">
+                                <?php
+                                $totalCredit = array_sum(array_column($ledger['entries'], 'credit'));
+                                echo number_format($totalCredit, 2);
+                                ?>
+                            </td>
+                            <td class="py-2 px-4 text-gray-900 font-bold border-t border-gray-300 text-right">
+                                <?= number_format($finalBalance, 2) ?>
                             </td>
                         </tr>
                     </tbody>
-                <?php endforeach; ?>
-            </table>
-        <?php endif; ?>
-        </div>
-        <div class="flex justify-end my-4">
-            <button
-                command="show-modal"
-                commandfor="download-dialog"
-                class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-green-200 size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </table>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <!-- Download Button -->
+    <div class="flex justify-end my-4">
+        <button
+            command="show-modal"
+            commandfor="download-dialog"
+            class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>Download PDF</span>
+        </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center my-4 space-x-2 pb-4">
+        <?php if ($page > 1): ?>
+            <a href="?page=<?= $page - 1 . $queryParams ?>"
+                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                 </svg>
-                <span>Download PDF</span>
-            </button>
-        </div>
+                <span>Prev</span>
+            </a>
+        <?php endif; ?>
 
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <a href="?page=<?= $i . $queryParams ?>"
+                class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
+                <?= $i ?>
+            </a>
+        <?php endfor; ?>
 
-        <!-- Pagination -->
-        <div class="flex justify-center my-4 space-x-2 pb-4">
-            <?php if ($page > 1): ?>
-                <a href="?page=<?= $page - 1 . $queryParams ?>"
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                    </svg>
-                    <span>Prev</span>
-                </a>
-            <?php endif; ?>
-
-            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                <a href="?page=<?= $i . $queryParams ?>"
-                    class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
-                    <?= $i ?>
-                </a>
-            <?php endfor; ?>
-
-            <?php if ($page < $total_pages): ?>
-                <a href="?page=<?= $page + 1 . $queryParams ?>"
-                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                    <span>Next</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                    </svg>
-                </a>
-            <?php endif; ?>
-        </div>
+        <?php if ($page < $total_pages): ?>
+            <a href="?page=<?= $page + 1 . $queryParams ?>"
+                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                <span>Next</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+            </a>
+        <?php endif; ?>
+    </div>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 
+<!-- Download Dialog -->
 <el-dialog>
     <dialog id="download-dialog" aria-labelledby="download-dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
         <el-dialog-backdrop class="fixed inset-0 bg-gray-900/50 transition-opacity"></el-dialog-backdrop>
@@ -210,10 +255,10 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                         </div>
 
                     <div class="text-left">
-                        <h3 id="download-dialog-title" class="text-lg font-semibold text-gray-900">Download Journal Entries</h3>
+                        <h3 id="download-dialog-title" class="text-lg font-semibold text-gray-900">Download General Ledger</h3>
 
                         <p class="mt-2 text-sm text-gray-600">
-                            Do you want to download a PDF of Journal Entries for
+                            Do you want to download a PDF of General Ledger for
                             <span class="font-semibold">
                                 <?php
                                 $label = "All Months & Years"; // Default value
@@ -241,7 +286,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
         </div>
 
         <!-- Form (Only Hidden Inputs) -->
-        <form action="../controllers/journalentries.controller.php" method="POST" target="_blank" class="px-6 pb-4">
+        <form action="../controllers/generalledger.controller.php" method="POST" target="_blank" class="px-6 pb-4">
             <input type="hidden" name="action" value="download_pdf">
             <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
             <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">
