@@ -2,7 +2,7 @@
 
 class ChartofAccountValidation
 {
-    public function validate($account_name, $account_type, $description)
+    public function validate($account_name, $account_type, $cash_flow_category, $description)
     {
         $errors = [];
 
@@ -20,6 +20,11 @@ class ChartofAccountValidation
 
         if (!empty($description) && strlen($description) > 255) {
             $errors[] = "Description must not exceed 255 characters.";
+        }
+        if (empty($cash_flow_category)) {
+            $errors[] = "Cash flow category is required.";
+        } elseif (!in_array($cash_flow_category, ['Operating', 'Investing', 'Financing', 'Not Applicable'])) {
+            $errors[] = "Invalid cash flow category selected.";
         }
 
         return $errors;

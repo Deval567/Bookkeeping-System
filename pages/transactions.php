@@ -112,7 +112,7 @@ $queryParams = '&' . http_build_query([
     <?php endif; ?>
 
     <!-- Search and Filter Form -->
-  <div class="bg-white p-4 mb-4 rounded shadow">
+    <div class="bg-white p-4 mb-4 rounded shadow">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
 
@@ -220,27 +220,25 @@ $queryParams = '&' . http_build_query([
         </form>
     </div>
     <!-- Transactions Table -->
-    <div class=" rounded-lg shadow">
-        <table class="min-w-full bg-white border border-gray-200">
-            <thead>
-                <tr class="bg-red-700 text-white">
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Date</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Name</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Reference Number #</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Details</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Total Amount</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Encoded By</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                <?php if (empty($transactions)): ?>
-                    <tr>
-                        <td colspan="7" class="py-4 px-4 text-center text-gray-500 font-semibold border">
-                            No Transactions found.
-                        </td>
+    <?php if (empty($transactions)): ?>
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+        </div>
+    <?php else: ?>
+        <div class=" rounded-lg shadow">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-red-700 text-white">
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Date</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Name</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Reference Number #</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Transaction Details</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Total Amount</th>
+                        <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Encoded By</th>
+                        <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
                     </tr>
-                <?php else: ?>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
                     <?php foreach ($transactions as $transaction): ?>
                         <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
@@ -282,46 +280,45 @@ $queryParams = '&' . http_build_query([
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-    </div>
-
-
-    <!-- Pagination Links !-->
-    <div class="flex justify-center my-4 space-x-2 pb-4">
-        <?php if ($page > 1): ?>
-            <a href="?page=<?= $page - 1 . $queryParams ?>"
-                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                </svg>
-                <span>Prev</span>
-            </a>
+                </tbody>
+            </table>
         <?php endif; ?>
+        </div>
 
-        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <a href="?page=<?= $i . $queryParams ?>"
-                class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
-                <?= $i ?>
-            </a>
-        <?php endfor; ?>
 
-        <?php if ($page < $total_pages): ?>
-            <a href="?page=<?= $page + 1 . $queryParams ?>"
-                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
-        <?php endif; ?>
-    </div>
+        <!-- Pagination Links !-->
+        <div class="flex justify-center my-4 space-x-2 pb-4">
+            <?php if ($page > 1): ?>
+                <a href="?page=<?= $page - 1 . $queryParams ?>"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                    </svg>
+                    <span>Prev</span>
+                </a>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?page=<?= $i . $queryParams ?>"
+                    class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
+
+            <?php if ($page < $total_pages): ?>
+                <a href="?page=<?= $page + 1 . $queryParams ?>"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                    <span>Next</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
+            <?php endif; ?>
+        </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 <!-- Add New Transaction Modal -->

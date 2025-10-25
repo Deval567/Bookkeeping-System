@@ -39,5 +39,5 @@ if (!empty($month) && !empty($year)) {
 $filename .= '.pdf';
 
 header('Content-Type: application/pdf');
-header('Content-Disposition: inline; filename="' . $filename . '"');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
 echo $dompdf->output();

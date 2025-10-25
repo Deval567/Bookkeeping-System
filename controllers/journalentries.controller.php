@@ -4,8 +4,16 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: ../index.php");
-    exit;
+    $month = $_POST['month'] ?? $_GET['month'] ?? '';
+$year = $_POST['year'] ?? $_GET['year'] ?? '';
+
+if (isset($_GET['download'])) {
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+} else {
+    header('Content-Disposition: inline; filename="' . $filename . '"');
+}
+header('Content-Type: application/pdf');
+echo $dompdf->output();
 }
 require_once '../configs/dbc.php';
 require_once '../models/journalentries.class.php';
@@ -39,6 +47,7 @@ if (!empty($month) && !empty($year)) {
 $filename .= '.pdf';
 
 header('Content-Type: application/pdf');
-header('Content-Disposition: inline; filename="' . $filename . '"');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Content-Transfer-Encoding: binary');
+header('Accept-Ranges: bytes');
 echo $dompdf->output();
-exit;

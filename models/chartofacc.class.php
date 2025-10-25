@@ -6,49 +6,58 @@ class ChartofAccounts
     private $id;
     private $account_name;
     private $account_type;
+    private $cash_flow_category;
     private $description;
     private $limit = 10;
 
-    public function __construct($conn, $id, $account_name, $account_type, $description)
+    public function __construct($conn, $id, $account_name, $account_type, $cash_flow_category, $description)
     {
         $this->conn = $conn;
         $this->id = $id;
         $this->account_name = $account_name;
         $this->account_type = $account_type;
+        $this->cash_flow_category = $cash_flow_category;
         $this->description = $description;
     }
     public function getAllChart()
-{
-    $sql = "
+    {
+        $sql = "
         SELECT 
             id,
             account_name,
-            account_type
+            account_type,
+            cash_flow_category
         FROM chart_of_accounts
         ORDER BY account_type ASC, account_name ASC
     ";
-    $result = mysqli_query($this->conn, $sql);
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
-}
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
 
-    public function getTotalCharts($search = '', $filter = '')
+    public function getTotalCharts($search = '', $filter = '', $cash_flow_category = '')
     {
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' || $filter !== '') {
+        if ($search !== '' || $filter !== '' || $cash_flow_category !== '') {
             $conditions = [];
 
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
                 $conditions[] = "(account_name LIKE '%$search%' 
-                              OR account_type LIKE '%$search%' 
-                              OR description LIKE '%$search%')";
+                          OR account_type LIKE '%$search%'
+                          OR cash_flow_category LIKE '%$search%'
+                          OR description LIKE '%$search%')";
             }
 
             if ($filter !== '') {
                 $filter = mysqli_real_escape_string($this->conn, $filter);
                 $conditions[] = "account_type = '$filter'";
+            }
+
+            if ($cash_flow_category !== '') {
+                $cash_flow_category = mysqli_real_escape_string($this->conn, $cash_flow_category);
+                $conditions[] = "cash_flow_category = '$cash_flow_category'";
             }
 
             $filterQuery = "WHERE " . implode(' AND ', $conditions);
@@ -61,7 +70,7 @@ class ChartofAccounts
         return (int)$row['total'];
     }
 
-    public function getPaginatedCharts($page = 1, $search = '', $filter = '')
+    public function getPaginatedCharts($page = 1, $search = '', $filter = '', $cash_flow_category = '')
     {
         $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
@@ -69,19 +78,26 @@ class ChartofAccounts
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' || $filter !== '') {
+        // FIXED: Added $cash_flow_category to the condition
+        if ($search !== '' || $filter !== '' || $cash_flow_category !== '') {
             $conditions = [];
 
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
                 $conditions[] = "(account_name LIKE '%$search%' 
-                              OR account_type LIKE '%$search%' 
-                              OR description LIKE '%$search%')";
+                          OR account_type LIKE '%$search%' 
+                          OR cash_flow_category LIKE '%$search%'
+                          OR description LIKE '%$search%')";
             }
 
             if ($filter !== '') {
                 $filter = mysqli_real_escape_string($this->conn, $filter);
                 $conditions[] = "account_type = '$filter'";
+            }
+
+            if ($cash_flow_category !== '') {
+                $cash_flow_category = mysqli_real_escape_string($this->conn, $cash_flow_category);
+                $conditions[] = "cash_flow_category = '$cash_flow_category'";
             }
 
             $filterQuery = "WHERE " . implode(' AND ', $conditions);
@@ -98,11 +114,10 @@ class ChartofAccounts
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalPages($search = '', $filter = '')
+    public function getTotalPages($search = '', $filter = '', $cash_flow_category = '')
     {
-        return ceil($this->getTotalCharts($search, $filter) / $this->limit);
+        return ceil($this->getTotalCharts($search, $filter, $cash_flow_category) / $this->limit);
     }
-
     public function isAccountExists()
     {
         $sql = "SELECT * FROM chart_of_accounts WHERE account_name = ?";
@@ -128,30 +143,30 @@ class ChartofAccounts
 
     public function createAccount()
     {
-        $sql = "INSERT INTO chart_of_accounts (account_name, account_type, description) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO chart_of_accounts (account_name, account_type, cash_flow_category, description) VALUES (?, ?, ?, ?)";
         $stmt = mysqli_stmt_init($this->conn);
 
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             return false;
         }
 
-        mysqli_stmt_bind_param($stmt, 'sss', $this->account_name, $this->account_type, $this->description);
+        mysqli_stmt_bind_param($stmt, 'ssss', $this->account_name, $this->account_type, $this->cash_flow_category, $this->description);
         $result = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
         return $result;
     }
 
-    public function updateAccount($id, $account_name, $account_type, $description)
+    public function updateAccount($id, $account_name, $account_type, $cash_flow_category, $description)
     {
-        $sql = "UPDATE chart_of_accounts SET account_name = ?, account_type = ?, description = ? WHERE id = ?";
+        $sql = "UPDATE chart_of_accounts SET account_name = ?, account_type = ?, cash_flow_category = ?, description = ? WHERE id = ?";
         $stmt = mysqli_stmt_init($this->conn);
 
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             return false;
         }
 
-        mysqli_stmt_bind_param($stmt, "sssi", $account_name, $account_type, $description, $id);
+        mysqli_stmt_bind_param($stmt, "ssssi", $account_name, $account_type, $cash_flow_category, $description, $id);
         $result = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
@@ -191,6 +206,5 @@ class ChartofAccounts
         } else {
             return false;
         }
-
     }
 }

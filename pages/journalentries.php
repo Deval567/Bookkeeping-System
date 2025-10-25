@@ -241,7 +241,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
         </div>
 
         <!-- Form (Only Hidden Inputs) -->
-        <form action="../controllers/journalentries.controller.php" method="POST" target="_blank" class="px-6 pb-4">
+        <form action="../controllers/journalentries.controller.php" method="POST" class="px-6 pb-4">
             <input type="hidden" name="action" value="download_pdf">
             <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
             <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">

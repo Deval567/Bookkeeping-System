@@ -7,7 +7,7 @@ require_once "../configs/dbc.php";
 require_once "../models/transactionrules.class.php";
 require_once "../models/chartofacc.class.php";
 
-$chartofacc = new ChartofAccounts($conn, null, null, null, null);
+$chartofacc = new ChartofAccounts($conn, null, null, null, null, null);
 $transactionRules = new transactionRules($conn, null, null, null, null);
 
 $page   = $_GET['page'] ?? 1;
@@ -157,6 +157,11 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
     </div>
 
     <!-- Transaction Rule Table -->
+     <?php if (empty($transactions)): ?>
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+        </div>
+    <?php else: ?>
     <div class=" rounded-lg shadow">
         <table class="min-w-full bg-white border border-gray-200">
             <thead>
@@ -169,13 +174,6 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                <?php if (empty($transactions)): ?>
-                    <tr>
-                        <td colspan="6" class="py-4 px-4 text-center text-gray-500 font-semibold border">
-                            No Transaction Rules found.
-                        </td>
-                    </tr>
-                <?php else: ?>
                     <?php foreach ($transactions as $transaction): ?>
                         <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
@@ -219,9 +217,9 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+            <?php endif; ?>
     </div>
 
     <!-- Pagination Links !-->

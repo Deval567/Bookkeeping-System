@@ -5,15 +5,16 @@ include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
 require_once "../configs/dbc.php";
 require_once "../models/chartofacc.class.php";
-$chartofacc = new ChartofAccounts($conn, null, null, null, null);
+$chartofacc = new ChartofAccounts($conn, null, null, null, null, null);
 
 $page   = $_GET['page'] ?? 1;
 $search = $_GET['search'] ?? '';
 $filter = $_GET['filter'] ?? '';
+$cash_flow_category = $_GET['cash_flow_category'] ?? '';
 
-$queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($filter);
-$charts = $chartofacc->getPaginatedCharts($page, $search, $filter);
-$total_pages = $chartofacc->getTotalPages($search, $filter);
+$queryParams = "&search=" . urlencode($search) . "&filter=" . urlencode($filter) . "&cash_flow_category=" . urlencode($cash_flow_category);
+$charts = $chartofacc->getPaginatedCharts($page, $search, $filter, $cash_flow_category);
+$total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category);
 
 ?>
 <main class="bg-gray-100 px-6 py-4">
@@ -88,7 +89,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
     endif;
     ?>
     <!-- Search and Filter Form -->
-  <div class="bg-white p-4 mb-4 rounded shadow">
+    <div class="bg-white p-4 mb-4 rounded shadow">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
 
@@ -107,6 +108,21 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                     <option value="Expense" <?= ($_GET['filter'] ?? '') === 'Expense' ? 'selected' : '' ?>>Expense</option>
                 </select>
             </div>
+
+            <!-- Cash Flow Category Dropdown -->
+            <div class="sm:w-48">
+                <label class="block text-sm text-gray-700 mb-1">Filter by Cash Flow Category</label>
+                <select
+                    name="cash_flow_category"
+                    onchange="this.form.submit()"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                    <option value="">--All Categories--</option>
+                    <option value="Operating" <?= ($_GET['cash_flow_category'] ?? '') === 'Operating' ? 'selected' : '' ?>>Operating</option>
+                    <option value="Investing" <?= ($_GET['cash_flow_category'] ?? '') === 'Investing' ? 'selected' : '' ?>>Investing</option>
+                    <option value="Financing" <?= ($_GET['cash_flow_category'] ?? '') === 'Financing' ? 'selected' : '' ?>>Financing</option>
+                </select>
+            </div>
+
             <!-- Search Input -->
             <div class="flex-1">
                 <label class="block text-sm text-gray-700 mb-1">Search</label>
@@ -148,24 +164,23 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
         </form>
     </div>
     <!-- Chart of Account Table -->
-    <div class=" rounded-lg shadow">
-        <table class="min-w-full bg-white border border-gray-200">
-            <thead>
-                <tr class="bg-red-700 text-white">
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Account Name</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Account Type</th>
-                    <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
-                    <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                <?php if (empty($charts)): ?>
-                    <tr>
-                        <td colspan="4" class="py-4 px-4 text-center text-gray-500 font-semibold border">
-                            No Accounts found.
-                        </td>
+    <?php if (empty($charts)): ?>
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+        </div>
+    <?php else: ?>
+        <div class=" rounded-lg shadow">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-red-700 text-white">
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Account Name</th>
+                        <th class="py-2 px-4 text-center text-sm font-medium border-r border-red-600">Account Type</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Cash Flow Category</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Description</th>
+                        <th class="py-2 px-4 text-center text-sm font-medium">Actions</th>
                     </tr>
-                <?php else: ?>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
                     <?php foreach ($charts as $chart): ?>
                         <tr class="hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
@@ -188,6 +203,9 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                                 </span>
                             </td>
                             <td class="py-2 px-4 text-gray-600 border-r border-gray-200">
+                                <?= ($chart['cash_flow_category']); ?>
+                            </td>
+                            <td class="py-2 px-4 text-gray-600 border-r border-gray-200">
                                 <?= ($chart['description']); ?>
                             </td>
                             <td class="py-2 px-4 border-gray-200">
@@ -207,45 +225,45 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-    </div>
-
-    <!-- Pagination Links !-->
-    <div class="flex justify-center my-4 space-x-2 pb-4">
-        <?php if ($page > 1): ?>
-            <a href="?page=<?= $page - 1 . $queryParams ?>"
-                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                </svg>
-                <span>Prev</span>
-            </a>
+                </tbody>
+            </table>
         <?php endif; ?>
+        </div>
+        </div>
 
-        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <a href="?page=<?= $i . $queryParams ?>"
-                class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
-                <?= $i ?>
-            </a>
-        <?php endfor; ?>
+        <!-- Pagination Links !-->
+        <div class="flex justify-center my-4 space-x-2 pb-4">
+            <?php if ($page > 1): ?>
+                <a href="?page=<?= $page - 1 . $queryParams ?>"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                    </svg>
+                    <span>Prev</span>
+                </a>
+            <?php endif; ?>
 
-        <?php if ($page < $total_pages): ?>
-            <a href="?page=<?= $page + 1 . $queryParams ?>"
-                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-                <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
-        <?php endif; ?>
-    </div>
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?page=<?= $i . $queryParams ?>"
+                    class="px-3 py-1 rounded <?= $i == $page ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
+
+            <?php if ($page < $total_pages): ?>
+                <a href="?page=<?= $page + 1 . $queryParams ?>"
+                    class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                    <span>Next</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
+            <?php endif; ?>
+        </div>
 
 </main>
 
@@ -293,6 +311,19 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                             <option value="Equity">Equity</option>
                             <option value="Revenue">Revenue</option>
                             <option value="Expense">Expense</option>
+                        </select>
+                    </div>
+
+
+                    <div>
+                        <label class="block text-sm text-gray-700 mb-1">Cash Flow Category</label>
+                        <select name="cash_flow_category"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            <option value="">Select Cash Flow Category</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                            <option value="Operating">Operating</option>
+                            <option value="Investing">Investing</option>
+                            <option value="Financing">Financing</option>
                         </select>
                     </div>
 
@@ -363,6 +394,18 @@ $total_pages = $chartofacc->getTotalPages($search, $filter);
                                 <option value="Equity" <?= $chart['account_type'] == 'Equity' ? 'selected' : '' ?>>Equity</option>
                                 <option value="Revenue" <?= $chart['account_type'] == 'Revenue' ? 'selected' : '' ?>>Revenue</option>
                                 <option value="Expense" <?= $chart['account_type'] == 'Expense' ? 'selected' : '' ?>>Expense</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-700 mb-1">Cash Flow Category</label>
+                            <select name="cash_flow_category"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                                <option value="">Select Cash Flow Category</option>
+                                <option value="Not Applicable" <?= $chart['cash_flow_category'] == 'Not Applicable' ? 'selected' : '' ?>>Not Applicable</option>
+                                <option value="Operating" <?= $chart['cash_flow_category'] == 'Operating' ? 'selected' : '' ?>>Operating</option>
+                                <option value="Investing" <?= $chart['cash_flow_category'] == 'Investing' ? 'selected' : '' ?>>Investing</option>
+                                <option value="Financing" <?= $chart['cash_flow_category'] == 'Financing' ? 'selected' : '' ?>>Financing</option>
                             </select>
                         </div>
 
