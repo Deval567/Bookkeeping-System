@@ -16,7 +16,7 @@ require_once '../models/transactionrules.class.php';
 require_once '../models/chartofacc.class.php';
 
 $validation = new transactionRuleLinesValidation($rule_id, $accounts, $entries);
-$chartofAcc = new ChartofAccounts($conn, null, null, null, null);
+$chartofAcc = new ChartofAccounts($conn, null, null, null, null,null);
 $transactionRules = new transactionRules($conn, null, null, null, null);
 $transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null);
 $errors = $validation->validate($rule_id, $accounts, $entries);

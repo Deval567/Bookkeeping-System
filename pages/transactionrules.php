@@ -159,7 +159,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
     <!-- Transaction Rule Table -->
      <?php if (empty($transactions)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
-            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+            <p class="text-gray-500 font-semibold">No Transaction Rules are found.</p>
         </div>
     <?php else: ?>
     <div class=" rounded-lg shadow">

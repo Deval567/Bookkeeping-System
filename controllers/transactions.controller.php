@@ -31,7 +31,7 @@ require_once '../models/chartofacc.class.php';
 $validator = new TransactionsValidation();
 $transaction = new Transaction($conn, $rule_id, $transaction_date, $reference_no, $description, $entry_types, $total_amount, $created_by);
 $journal_entries = new JournalEntries($conn, null, null, null, null, null, null);
-$chartofAcc = new ChartOfAccounts($conn, null, null, null, null);
+$chartofAcc = new ChartOfAccounts($conn, null, null, null, null,null);
 
 
 

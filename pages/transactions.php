@@ -222,7 +222,7 @@ $queryParams = '&' . http_build_query([
     <!-- Transactions Table -->
     <?php if (empty($transactions)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
-            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+            <p class="text-gray-500 font-semibold">No Transactions are found.</p>
         </div>
     <?php else: ?>
         <div class=" rounded-lg shadow">

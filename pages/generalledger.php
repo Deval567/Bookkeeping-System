@@ -185,9 +185,8 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                 </table>
             </div>
         <?php endforeach; ?>
-    <?php endif; ?>
-
-    <!-- Download Button -->
+        
+        <!-- Download Button -->
     <div class="flex justify-end my-4">
         <button
             command="show-modal"
@@ -199,20 +198,21 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             <span>Download PDF</span>
         </button>
     </div>
+    <?php endif; ?>
 
     <!-- Pagination -->
     <div class="flex justify-center my-4 space-x-2 pb-4">
         <?php if ($page > 1): ?>
             <a href="?page=<?= $page - 1 . $queryParams ?>"
-                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+            class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                 </svg>
                 <span>Prev</span>
             </a>
-        <?php endif; ?>
+            <?php endif; ?>
 
         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
             <a href="?page=<?= $i . $queryParams ?>"

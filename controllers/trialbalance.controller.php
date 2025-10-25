@@ -18,7 +18,11 @@ $journal = new JournalEntries($conn, null, null, null, null, null, null);
 
 $month = $_POST['month'] ?? '';
 $year = $_POST['year'] ?? '';
+$account_ids = $_POST['account_ids'];
+$balances = $_POST['balances'];
 $action = $_POST['action'];
+
+$_SESSION['trialbalance_month'] = [];
 
 $trialBalance = $journal->getAllTrialBalance($month, $year);
 
@@ -45,5 +49,5 @@ switch ($action) {
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         echo $dompdf->output();
         break;
-    case "close_account":
+
 }

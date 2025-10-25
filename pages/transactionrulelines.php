@@ -183,7 +183,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
     <!-- Rule Lines Table -->
     <?php if (empty($rule_lines)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
-            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+            <p class="text-gray-500 font-semibold">No Transacation Rule Lines are found.</p>
         </div>
     <?php else: ?>
         <div class=" rounded-lg shadow">

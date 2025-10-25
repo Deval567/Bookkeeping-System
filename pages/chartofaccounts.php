@@ -166,7 +166,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
     <!-- Chart of Account Table -->
     <?php if (empty($charts)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
-            <p class="text-gray-500 font-semibold">No Trial Balance Records are found.</p>
+            <p class="text-gray-500 font-semibold">No Accounts are found.</p>
         </div>
     <?php else: ?>
         <div class=" rounded-lg shadow">

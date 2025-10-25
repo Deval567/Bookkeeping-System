@@ -179,8 +179,8 @@
 
          <ul class="ml-8 mt-2 space-y-1 text-sm">
            <li>
-             <a href="general.transaction.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'General Transactions')
+             <a href="balancesheet.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Balance Sheet')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
                <span>
@@ -194,8 +194,8 @@
 
 
            <li>
-             <a href="#" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'Invoices')
+             <a href="incomestatement.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Income Statement')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
                <span>
@@ -207,8 +207,8 @@
              </a>
            </li>
            <li>
-             <a href="#" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
-              <?php echo ($title == 'Invoices')
+             <a href="cashflow.php" class="flex flex items-center gap-3 px-3 py-2 rounded-lg transition-all 
+              <?php echo ($title == 'Cash Flow Statement')
                 ? 'bg-red-50 text-red-700 font-semibold'
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-700 font-medium'; ?>">
                <span>
