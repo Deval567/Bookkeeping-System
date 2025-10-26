@@ -62,7 +62,10 @@ class JournalEntries
 
         if ($search !== '') {
             $search = mysqli_real_escape_string($this->conn, $search);
-            $conditions[] = "(je.description LIKE '%$search%' OR coa.account_name LIKE '%$search%')";
+            $conditions[] = "(je.description LIKE '%$search%' 
+                        OR coa.account_name LIKE '%$search%' 
+                        OR tr.rule_name LIKE '%$search%' 
+                        OR t.reference_no LIKE '%$search%')";
         }
 
         if ($month !== '') {
@@ -75,34 +78,44 @@ class JournalEntries
 
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
+        // Get transaction IDs with pagination
         $sqlIds = "
         SELECT DISTINCT je.transaction_id
         FROM journal_entries AS je
+        LEFT JOIN transactions AS t ON je.transaction_id = t.id
+        LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         $filterQuery
         ORDER BY je.date DESC
         LIMIT {$this->limit} OFFSET {$offset}
     ";
+
         $resultIds = mysqli_query($this->conn, $sqlIds);
         $transactionIds = mysqli_fetch_all($resultIds, MYSQLI_ASSOC);
+
         if (empty($transactionIds)) return [];
 
         $ids = implode(',', array_column($transactionIds, 'transaction_id'));
 
-
+        // Get full details for those transactions
         $sql = "
         SELECT 
             je.transaction_id,
             je.date AS journal_date,
             je.description,
+            t.reference_no,
+            tr.rule_name AS transaction_name,
             coa.account_name,
             je.debit,
             je.credit
         FROM journal_entries AS je
+        LEFT JOIN transactions AS t ON je.transaction_id = t.id
+        LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         WHERE je.transaction_id IN ($ids)
-        ORDER BY je.date DESC
+        ORDER BY je.date DESC, je.id ASC
     ";
+
         $result = mysqli_query($this->conn, $sql);
         $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
@@ -113,6 +126,8 @@ class JournalEntries
                 $transactions[$tid] = [
                     'transaction_id' => $tid,
                     'journal_date' => $row['journal_date'],
+                    'transaction_name' => $row['transaction_name'],
+                    'reference_no' => $row['reference_no'],
                     'description' => $row['description'],
                     'accounts' => []
                 ];
@@ -145,6 +160,7 @@ class JournalEntries
 
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
+        // Get transaction IDs with filters
         $sqlIds = "
         SELECT DISTINCT je.transaction_id
         FROM journal_entries AS je
@@ -158,18 +174,23 @@ class JournalEntries
 
         $ids = implode(',', array_column($transactionIds, 'transaction_id'));
 
+        // Get full details including transaction name and reference number
         $sql = "
         SELECT 
             je.transaction_id,
             je.date AS journal_date,
             je.description,
+            t.reference_no,
+            tr.rule_name AS transaction_name,
             coa.account_name,
             je.debit,
             je.credit
         FROM journal_entries AS je
+        LEFT JOIN transactions AS t ON je.transaction_id = t.id
+        LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         WHERE je.transaction_id IN ($ids)
-        ORDER BY je.date ASC, je.transaction_id ASC
+        ORDER BY je.date ASC, je.transaction_id ASC, je.id ASC
     ";
         $result = mysqli_query($this->conn, $sql);
         $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
@@ -182,6 +203,8 @@ class JournalEntries
                 $transactions[$tid] = [
                     'transaction_id' => $tid,
                     'journal_date' => $row['journal_date'],
+                    'transaction_name' => $row['transaction_name'],
+                    'reference_no' => $row['reference_no'],
                     'description' => $row['description'],
                     'accounts' => []
                 ];
@@ -195,7 +218,6 @@ class JournalEntries
 
         return array_values($transactions);
     }
-
 
     public function createJournalEntry($transaction_id, $account_id, $entry_type, $amount, $description, $date)
     {
@@ -566,15 +588,15 @@ class JournalEntries
     }
     //Cash Flow Statement
     public function getCashFlow($month = null, $year = null)
-{
-    $where = [];
+    {
+        $where = [];
 
-    if ($month) $where[] = "MONTH(j.date) = " . intval($month);
-    if ($year)  $where[] = "YEAR(j.date) = " . intval($year);
+        if ($month) $where[] = "MONTH(j.date) = " . intval($month);
+        if ($year)  $where[] = "YEAR(j.date) = " . intval($year);
 
-    $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+        $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-    $sql = "
+        $sql = "
         SELECT 
             coa.account_name, 
             coa.cash_flow_category, 
@@ -587,37 +609,35 @@ class JournalEntries
         ORDER BY FIELD(coa.cash_flow_category, 'Operating', 'Investing', 'Financing'), coa.account_name
     ";
 
-    $result = $this->conn->query($sql);
-    $entries = [];
+        $result = $this->conn->query($sql);
+        $entries = [];
 
-    if ($result && $result->num_rows) {
-        while ($row = $result->fetch_assoc()) {
-            $entries[] = $row;
+        if ($result && $result->num_rows) {
+            while ($row = $result->fetch_assoc()) {
+                $entries[] = $row;
+            }
         }
-    }
 
-    $cashFlows = [
-        'Operating' => [],
-        'Investing' => [],
-        'Financing' => [],
-        'NetCash' => 0
-    ];
+        $cashFlows = [
+            'Operating' => [],
+            'Investing' => [],
+            'Financing' => [],
+            'NetCash' => 0
+        ];
 
-    foreach ($entries as $entry) {
-        $category = ucfirst(strtolower($entry['cash_flow_category']));
-        $balance = $entry['balance'];
+        foreach ($entries as $entry) {
+            $category = ucfirst(strtolower($entry['cash_flow_category']));
+            $balance = $entry['balance'];
 
-        if (in_array($category, ['Operating', 'Investing', 'Financing'])) {
-            $cashFlows[$category][] = [
-                'name' => $entry['account_name'],
-                'balance' => $balance
-            ];
-            $cashFlows['NetCash'] += $balance;
+            if (in_array($category, ['Operating', 'Investing', 'Financing'])) {
+                $cashFlows[$category][] = [
+                    'name' => $entry['account_name'],
+                    'balance' => $balance
+                ];
+                $cashFlows['NetCash'] += $balance;
+            }
         }
+
+        return $cashFlows;
     }
-
-    return $cashFlows;
-}
-
-
 }

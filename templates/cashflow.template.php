@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Trial Balance</title>
+    <title>Cash Flow Statement</title>
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -26,6 +26,7 @@
         .header td {
             border: none;
             padding: 0;
+            vertical-align: middle;
         }
 
         .header img {
@@ -68,26 +69,24 @@
         table.statement td {
             border: 1px solid #333;
             padding: 8px;
+            text-align: right;
         }
 
         table.statement th {
             background-color: #b91c1c;
             color: white;
+            text-align: center;
             font-weight: bold;
-            text-align: left;
         }
 
-        table.statement td {
-            text-align: left;
-        }
-
-        td.text-right {
-            text-align: right;
-        }
-
-        .totals {
-            font-weight: bold;
+        .total-row {
             background-color: #f3f4f6;
+            font-weight: bold;
+        }
+
+        .net-row {
+            background-color: #e5e7eb;
+            font-weight: bold;
         }
 
         .empty-notice {
@@ -101,15 +100,21 @@
 <body>
 
 <?php
-// Get logo as base64
 $logoPath = dirname(__DIR__) . '/images/logo.jpg';
-$logoData = '';
-if (file_exists($logoPath)) {
-    $logoData = base64_encode(file_get_contents($logoPath));
-}
+$logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+
+$operating = $cashFlow['Operating'] ?? [];
+$investing = $cashFlow['Investing'] ?? [];
+$financing = $cashFlow['Financing'] ?? [];
+
+$totalOperating = array_sum(array_column($operating, 'balance'));
+$totalInvesting = array_sum(array_column($investing, 'balance'));
+$totalFinancing = array_sum(array_column($financing, 'balance'));
+
+$maxRows = max(count($operating), count($investing), count($financing));
+$netCash = $cashFlow['NetCash'] ?? ($totalOperating + $totalInvesting + $totalFinancing);
 ?>
 
-<!-- Header -->
 <div class="header">
     <table>
         <tr>
@@ -128,60 +133,52 @@ if (file_exists($logoPath)) {
     </table>
 </div>
 
-<!-- Title -->
-<h2>Trial Balance</h2>
+<h2>Cash Flow Statement</h2>
 <p class="period">
-    As of 
+    For the period ending 
     <?php 
-    if (!empty($month) && !empty($year)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' ' . $year;
-    } elseif (!empty($month)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' (All Years)';
-    } elseif (!empty($year)) {
-        echo 'All Months ' . $year;
-    } else {
-        echo 'All Periods';
-    }
+        if (!empty($month) && !empty($year)) {
+            echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' ' . $year;
+        } elseif (!empty($month)) {
+            echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' (All Years)';
+        } elseif (!empty($year)) {
+            echo 'All Months ' . $year;
+        } else {
+            echo 'All Periods';
+        }
     ?>
 </p>
 
-<?php if (empty($trialBalance)): ?>
-    <p class="empty-notice">No Trial Balance Records Found</p>
+<?php if (empty($operating) && empty($investing) && empty($financing)): ?>
+    <p class="empty-notice">No Cash Flow Records Found</p>
 <?php else: ?>
     <table class="statement">
         <thead>
             <tr>
-                <th style="width: 40%;">Account Name</th>
-                <th style="width: 20%;">Account Type</th>
-                <th style="width: 20%;">Debit</th>
-                <th style="width: 20%;">Credit</th>
+                <th>Operating Activities</th>
+                <th>Investing Activities</th>
+                <th>Financing Activities</th>
             </tr>
         </thead>
         <tbody>
-            <?php
-            $totalDebit = 0;
-            $totalCredit = 0;
+            <?php for ($i = 0; $i < $maxRows; $i++): ?>
+                <tr>
+                    <td><?= isset($operating[$i]) ? htmlspecialchars($operating[$i]['name']) . ': ' . number_format($operating[$i]['balance'], 2) : '&nbsp;' ?></td>
+                    <td><?= isset($investing[$i]) ? htmlspecialchars($investing[$i]['name']) . ': ' . number_format($investing[$i]['balance'], 2) : '&nbsp;' ?></td>
+                    <td><?= isset($financing[$i]) ? htmlspecialchars($financing[$i]['name']) . ': ' . number_format($financing[$i]['balance'], 2) : '&nbsp;' ?></td>
+                </tr>
+            <?php endfor; ?>
 
-            foreach ($trialBalance as $row):
-                $totalDebit += $row['total_debit'];
-                $totalCredit += $row['total_credit'];
-            ?>
-            <tr>
-                <td><?= htmlspecialchars($row['account_name']) ?></td>
-                <td><?= htmlspecialchars($row['account_type']) ?></td>
-                <td class="text-right"><?= number_format($row['total_debit'], 2) ?></td>
-                <td class="text-right"><?= number_format($row['total_credit'], 2) ?></td>
+            <tr class="total-row">
+                <td>Total Operating: <?= number_format($totalOperating, 2) ?></td>
+                <td>Total Investing: <?= number_format($totalInvesting, 2) ?></td>
+                <td>Total Financing: <?= number_format($totalFinancing, 2) ?></td>
             </tr>
-            <?php endforeach; ?>
 
-            <tr class="totals">
-                <td colspan="2">Total</td>
-                <td class="text-right"><?= number_format($totalDebit, 2) ?></td>
-                <td class="text-right"><?= number_format($totalCredit, 2) ?></td>
+            <tr class="net-row">
+                <td colspan="3" style="text-align:center;">
+                    Net Cash Flow: <?= number_format($netCash, 2) ?>
+                </td>
             </tr>
         </tbody>
     </table>

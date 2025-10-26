@@ -84,6 +84,7 @@ $netIncome = $totalRevenue - $totalExpenses;
             </form>
         </div>
     </div>
+    
 <?php if (empty($entries)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
         <p class="text-gray-500 font-semibold">No Income Statement Records Found</p>
@@ -189,7 +190,7 @@ $netIncome = $totalRevenue - $totalExpenses;
                 </div>
 
                 <!-- Form (Hidden Inputs) -->
-                <form action="../controllers/trialbalance.controller.php" method="POST" target="_blank" class="px-6 pb-4">
+                <form action="../controllers/incomestatement.controller.php" method="POST" target="_blank" class="px-6 pb-4">
                     <input type="hidden" name="action" value="download_pdf">
                     <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
                     <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">

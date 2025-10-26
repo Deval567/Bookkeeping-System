@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Journal Entries</title>
+    <title>Balance Sheet</title>
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -61,44 +61,26 @@
         table.statement {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-top: 20px;
         }
 
         table.statement th,
         table.statement td {
             border: 1px solid #333;
             padding: 8px;
+            text-align: right;
         }
 
         table.statement th {
             background-color: #b91c1c;
             color: white;
+            text-align: center;
             font-weight: bold;
         }
 
-        .text-right {
-            text-align: right;
-        }
-
-        .gray-bg {
+        .total-row {
             background-color: #f3f4f6;
-            font-size: 11px;
-            padding: 6px 8px !important;
-        }
-
-        .gray-bg strong {
             font-weight: bold;
-            color: #111827;
-        }
-
-        .gray-bg .ref {
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .gray-bg .desc {
-            font-style: italic;
-            color: #6b7280;
         }
 
         .empty-notice {
@@ -118,6 +100,32 @@ $logoData = '';
 if (file_exists($logoPath)) {
     $logoData = base64_encode(file_get_contents($logoPath));
 }
+
+// Process balances
+$assets = [];
+$liabilities = [];
+$equities = [];
+$totalAssets = 0;
+$totalLiabilities = 0;
+$totalEquity = 0;
+
+foreach ($balances as $bal) {
+    $balance = $bal['balance'];
+    $type = strtoupper($bal['account_type']);
+    
+    if ($type == 'ASSET') {
+        $assets[] = ['name' => $bal['account_name'], 'balance' => $balance];
+        $totalAssets += $balance;
+    } elseif ($type == 'LIABILITY') {
+        $liabilities[] = ['name' => $bal['account_name'], 'balance' => $balance];
+        $totalLiabilities += $balance;
+    } elseif ($type == 'EQUITY') {
+        $equities[] = ['name' => $bal['account_name'], 'balance' => $balance];
+        $totalEquity += $balance;
+    }
+}
+
+$maxRows = max(count($assets), count($liabilities), count($equities));
 ?>
 
 <!-- Header -->
@@ -140,18 +148,14 @@ if (file_exists($logoPath)) {
 </div>
 
 <!-- Title -->
-<h2>Journal Entries</h2>
+<h2>Balance Sheet</h2>
 <p class="period">
-    For the period of 
+    As of 
     <?php 
     if (!empty($month) && !empty($year)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' ' . $year;
+        echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' ' . $year;
     } elseif (!empty($month)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' (All Years)';
+        echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' (All Years)';
     } elseif (!empty($year)) {
         echo 'All Months ' . $year;
     } else {
@@ -160,51 +164,50 @@ if (file_exists($logoPath)) {
     ?>
 </p>
 
-<?php if (empty($entries)): ?>
-    <p class="empty-notice">No Journal Entries Found</p>
+<?php if (empty($balances)): ?>
+    <p class="empty-notice">No Balance Sheet Records Found</p>
 <?php else: ?>
     <table class="statement">
         <thead>
             <tr>
-                <th style="width: 15%;">Date</th>
-                <th style="width: 40%;">Particulars</th>
-                <th style="width: 22.5%;" class="text-right">Debit</th>
-                <th style="width: 22.5%;" class="text-right">Credit</th>
+                <th style="width: 33.33%;">Assets</th>
+                <th style="width: 33.33%;">Liabilities</th>
+                <th style="width: 33.33%;">Equity</th>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($entries as $entry): ?>
-                <?php 
-                $accounts = $entry['accounts'];
-                $rowCount = count($accounts); 
-                ?>
-                
-                <?php for ($i = 0; $i < $rowCount; $i++): ?>
-                    <tr>
-                        <?php if ($i === 0): ?>
-                            <td rowspan="<?= $rowCount ?>">
-                                <?= htmlspecialchars($entry['journal_date']) ?>
-                            </td>
+            <?php for ($i = 0; $i < $maxRows; $i++): ?>
+                <tr>
+                    <td>
+                        <?php if (isset($assets[$i])): ?>
+                            <?= htmlspecialchars($assets[$i]['name']) ?>: <?= number_format($assets[$i]['balance'], 2) ?>
+                        <?php else: ?>
+                            &nbsp;
                         <?php endif; ?>
-                        
-                        <td><?= htmlspecialchars($accounts[$i]['account_name']) ?></td>
-                        <td class="text-right"><?= number_format($accounts[$i]['debit'], 2) ?></td>
-                        <td class="text-right"><?= number_format($accounts[$i]['credit'], 2) ?></td>
-                    </tr>
-                <?php endfor; ?>
-                
-                <tr class="gray-bg">
-                    <td colspan="4">
-                        <strong><?= htmlspecialchars($entry['transaction_name'] ?? 'General Entry') ?></strong>
-                        <?php if (!empty($entry['reference_no'])): ?>
-                            - Ref# <span class="ref"><?= htmlspecialchars($entry['reference_no']) ?></span>
+                    </td>
+                    <td>
+                        <?php if (isset($liabilities[$i])): ?>
+                            <?= htmlspecialchars($liabilities[$i]['name']) ?>: <?= number_format($liabilities[$i]['balance'], 2) ?>
+                        <?php else: ?>
+                            &nbsp;
                         <?php endif; ?>
-                        <?php if (!empty($entry['description'])): ?>
-                            <br><span class="desc">(<?= htmlspecialchars($entry['description']) ?>)</span>
+                    </td>
+                    <td>
+                        <?php if (isset($equities[$i])): ?>
+                            <?= htmlspecialchars($equities[$i]['name']) ?>: <?= number_format($equities[$i]['balance'], 2) ?>
+                        <?php else: ?>
+                            &nbsp;
                         <?php endif; ?>
                     </td>
                 </tr>
-            <?php endforeach; ?>
+            <?php endfor; ?>
+
+            <tr class="total-row">
+                <td>Total Assets: <?= number_format(abs($totalAssets), 2) ?></td>
+                <td colspan="2" style="text-align: center;">
+                    Total Liabilities + Equity: <?= number_format(abs($totalLiabilities + $totalEquity), 2) ?>
+                </td>
+            </tr>
         </tbody>
     </table>
 <?php endif; ?>

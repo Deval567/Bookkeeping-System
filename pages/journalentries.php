@@ -24,8 +24,6 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
         <p class="text-gray-600">Manage <?= $title ?> here.</p>
     </div>
 
-
-
     <!-- Filter Form -->
     <div class="bg-white p-4 mb-4 rounded shadow">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -63,7 +61,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                     <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                     </svg>
-                    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search account or description..."
+                    <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search account, transaction, or description..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
                 </div>
             </div>
@@ -90,7 +88,6 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             </div>
         </form>
     </div>
-
 
     <!-- Journal Entries Table -->
     <?php if (empty($journalEntries)): ?>
@@ -135,8 +132,14 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                             </tr>
                         <?php endfor; ?>
                         <tr class="bg-gray-50">
-                            <td colspan="4" class="py-1 px-4 text-gray-600 italic">
-                                (<?= htmlspecialchars($je['description'] ?? '') ?>)
+                            <td colspan="4" class="py-1 px-4 text-gray-600 text-sm">
+                                <strong><?= htmlspecialchars($je['transaction_name'] ?? 'General Entry') ?></strong>
+                                <?php if (!empty($je['reference_no'])): ?>
+                                    - Ref# <span class="font-medium"><?= htmlspecialchars($je['reference_no']) ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($je['description'])): ?>
+                                    <br><span class="italic text-gray-500">(<?= htmlspecialchars($je['description']) ?>)</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     </tbody>
@@ -155,7 +158,6 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             </button>
         </div>
     <?php endif; ?>
-
 
     <!-- Pagination -->
     <div class="flex justify-center my-4 space-x-2 pb-4">
@@ -191,6 +193,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
         <?php endif; ?>
     </div>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 
 <el-dialog>
@@ -216,32 +219,24 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                 Do you want to download a PDF of Journal Entries for
                                 <span class="font-semibold">
                                     <?php
-                                    $label = "All Months & Years"; // Default value
-
-                                    // Both month and a specific year
-                                    if (!empty($month) && !empty($year) && $year !== 'all') {
+                                    $label = "All Months & Years";
+                                    if (!empty($month) && !empty($year)) {
                                         $label = date("F", mktime(0, 0, 0, $month, 1)) . " " . $year;
-
-                                        // Month selected but year is empty or "all"
-                                    } elseif (!empty($month) && (empty($year) || $year === 'all')) {
+                                    } elseif (!empty($month)) {
                                         $label = date("F", mktime(0, 0, 0, $month, 1)) . " (All Years)";
-
-                                        // Year selected but month is empty
-                                    } elseif (empty($month) && !empty($year) && $year !== 'all') {
+                                    } elseif (!empty($year)) {
                                         $label = "All Months " . $year;
                                     }
-
                                     echo $label;
                                     ?>
                                 </span>
                             </p>
-
                         </div>
                     </div>
                 </div>
 
-                <!-- Form (Only Hidden Inputs) -->
-                <form action="../controllers/journalentries.controller.php" method="POST" class="px-6 pb-4">
+                <!-- Form -->
+                <form action="../controllers/journalentries.controller.php" method="POST" target="_blank" class="px-6 pb-4">
                     <input type="hidden" name="action" value="download_pdf">
                     <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
                     <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">
