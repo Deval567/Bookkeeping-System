@@ -11,6 +11,25 @@
             margin: 0;
             padding: 20px;
         }
+        .statement-title {
+            text-align: center;
+            margin: 20px 0 15px 0;
+            background-color: #b91c1c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .statement-title h2 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .statement-title p {
+            margin: 0;
+            font-size: 11px;
+        }
 
         .header {
             margin-bottom: 20px;
@@ -139,26 +158,28 @@ if (file_exists($logoPath)) {
     </table>
 </div>
 
-<!-- Title -->
-<h2>Journal Entries</h2>
-<p class="period">
-    For the period of 
-    <?php 
-    if (!empty($month) && !empty($year)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' ' . $year;
-    } elseif (!empty($month)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' (All Years)';
-    } elseif (!empty($year)) {
-        echo 'All Months ' . $year;
-    } else {
-        echo 'All Periods';
-    }
-    ?>
-</p>
+<!-- Statement Title -->
+    <div class="statement-title">
+        <h2>JOURNAL ENTRIES</h2>
+        <p>
+            For the Period of
+            <?php
+            if (!empty($month) && !empty($year)) {
+                $dateObj = DateTime::createFromFormat('!m', $month);
+                $monthName = $dateObj ? $dateObj->format('F') : $month;
+                echo $monthName . ' ' . $year;
+            } elseif (!empty($month)) {
+                $dateObj = DateTime::createFromFormat('!m', $month);
+                $monthName = $dateObj ? $dateObj->format('F') : $month;
+                echo $monthName . ' (All Years)';
+            } elseif (!empty($year)) {
+                echo 'All Months ' . $year;
+            } else {
+                echo 'All Periods';
+            }
+            ?>
+        </p>
+    </div>
 
 <?php if (empty($entries)): ?>
     <p class="empty-notice">No Journal Entries Found</p>

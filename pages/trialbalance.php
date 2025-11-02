@@ -145,10 +145,10 @@ $trialBalance = $entry->getAllTrialBalance($month, $year);
                     ?>
 
                     <?php foreach ($trialBalance as $row):
-                        $totalDebit += $row['total_debit'];
-                        $totalCredit += $row['total_credit'];
+                        $totalDebit += $row['display_debit'];
+                        $totalCredit += $row['display_credit'];
                     ?>
-                        <tr class="hover:scale-[1.02]  transition-transform duration-150 hover:bg-gray-100">
+                        <tr class="hover:scale-[1.02] transition-transform duration-150 hover:bg-gray-100">
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200">
                                 <?= htmlspecialchars($row['account_name']) ?>
                             </td>
@@ -162,27 +162,47 @@ $trialBalance = $entry->getAllTrialBalance($month, $year);
                                     'Expense' => 'bg-yellow-100 text-yellow-700',
                                     'Revenue' => 'bg-purple-100 text-purple-700',
                                 ];
-                                $style = $accTypeStyle[$row['account_type']] ?? 'bg-gray-100 text-gray-700';
+                                $style = $accTypeStyle[$acc_type] ?? 'bg-gray-100 text-gray-700';
                                 ?>
                                 <span class="inline-block px-3 py-1 rounded-full text-sm font-medium <?= $style ?>">
                                     <?= strtoupper($acc_type) ?>
                                 </span>
                             </td>
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
-                                <?= number_format($row['total_debit'], 2) ?>
+                                <?= $row['display_debit'] > 0 ? number_format($row['display_debit'], 2) : '—' ?>
                             </td>
                             <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
-                                <?= number_format($row['total_credit'], 2) ?>
+                                <?= $row['display_credit'] > 0 ? number_format($row['display_credit'], 2) : '—' ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
 
-                    <!-- Totals Row -->
                     <tr class="bg-gray-50 font-bold">
                         <td colspan="2" class="py-2 px-4 border-t border-gray-300">Total</td>
-                        <td class="py-2 px-4 text-right border-t border-gray-300"><?= number_format($totalDebit, 2) ?></td>
-                        <td class="py-2 px-4 text-right border-t border-gray-300"><?= number_format($totalCredit, 2) ?></td>
+                        <td class="py-2 px-4 text-right border-t border-gray-300">
+                            <?= number_format($totalDebit, 2) ?>
+                        </td>
+                        <td class="py-2 px-4 text-right border-t border-gray-300">
+                            <?= number_format($totalCredit, 2) ?>
+                        </td>
                     </tr>
+
+                    <?php
+                    $difference = abs($totalDebit - $totalCredit);
+                    if ($difference > 0.01):
+                    ?>
+                        <tr class="bg-red-50">
+                            <td colspan="2" class="py-2 px-4 text-red-700 font-semibold">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-700 inline-block mr-2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                </svg>
+                                Trial Balance is OUT OF BALANCE
+                            </td>
+                            <td colspan="2" class="py-2 px-4 text-right text-red-700 font-semibold">
+                                Difference: <?= number_format($difference, 2) ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -197,8 +217,8 @@ $trialBalance = $entry->getAllTrialBalance($month, $year);
                 <span>Download PDF</span>
             </button>
         </div>
-        <?php endif; ?>
-    </main>
+    <?php endif; ?>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 
 <!-- Download Dialog -->

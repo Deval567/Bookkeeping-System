@@ -493,65 +493,135 @@ class JournalEntries
 
     public function getAllTrialBalance($month = '', $year = '')
     {
-        $conditions = [];
-        if ($month !== '') $conditions[] = "MONTH(je.date) = " . intval($month);
-        if ($year !== '') $conditions[] = "YEAR(je.date) = " . intval($year);
+        $conditions = ["je.id IS NOT NULL"];
 
-        $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
+        if ($month !== '') {
+            $conditions[] = "MONTH(je.date) = " . intval($month);
+        }
+        if ($year !== '') {
+            $conditions[] = "YEAR(je.date) = " . intval($year);
+        }
+
+        $filterQuery = "WHERE " . implode(' AND ', $conditions);
 
         $sql = "
         SELECT 
             coa.id AS account_id,
             coa.account_name,
             coa.account_type,
-            SUM(je.debit) AS total_debit,
-            SUM(je.credit) AS total_credit,
-            (SUM(je.debit) - SUM(je.credit)) AS balance
-        FROM journal_entries AS je
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+            SUM(COALESCE(je.debit, 0)) AS total_debit,
+            SUM(COALESCE(je.credit, 0)) AS total_credit
+        FROM chart_of_accounts AS coa
+        INNER JOIN journal_entries AS je ON je.account_id = coa.id
         $filterQuery
         GROUP BY coa.id, coa.account_name, coa.account_type
-        ORDER BY coa.account_type, coa.account_name
+        ORDER BY 
+            FIELD(coa.account_type, 'Asset', 'Liability', 'Equity', 'Revenue', 'Expense'),
+            coa.account_name
     ";
 
         $result = mysqli_query($this->conn, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
+        $trialBalance = [];
 
-    //Balance Sheet
+        while ($row = mysqli_fetch_assoc($result)) {
+            $debit = $row['total_debit'];
+            $credit = $row['total_credit'];
+            $type = $row['account_type'];
+
+            $isDebitNormal = in_array($type, ['Asset', 'Expense']);
+
+            if ($isDebitNormal) {
+                $netBalance = $debit - $credit;
+                $row['display_debit'] = $netBalance > 0 ? $netBalance : 0;
+                $row['display_credit'] = $netBalance < 0 ? abs($netBalance) : 0;
+            } else {
+                $netBalance = $credit - $debit;
+                $row['display_credit'] = $netBalance > 0 ? $netBalance : 0;
+                $row['display_debit'] = $netBalance < 0 ? abs($netBalance) : 0;
+            }
+
+            $trialBalance[] = $row;
+        }
+
+        return $trialBalance;
+    }
+    // Balance Sheet
     public function getBalanceSheet($month = null, $year = null)
     {
         $where = [];
-
-        if ($month) $where[] = "MONTH(j.date) = " . intval($month);
-        if ($year)  $where[] = "YEAR(j.date) = " . intval($year);
-
+        if ($month) $where[] = "MONTH(je.date) = " . intval($month);
+        if ($year)  $where[] = "YEAR(je.date) = " . intval($year);
         $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
+        // Get Asset, Liability, and Equity balances
         $sql = "
         SELECT 
+            coa.id,
             coa.account_name, 
-            coa.account_type, 
-            SUM(j.debit - j.credit) AS balance
-        FROM journal_entries j
-        JOIN chart_of_accounts coa ON j.account_id = coa.id
+            coa.account_type,
+            SUM(COALESCE(je.debit, 0)) AS total_debit,
+            SUM(COALESCE(je.credit, 0)) AS total_credit,
+            CASE 
+                WHEN coa.account_type = 'Asset' THEN 
+                    SUM(COALESCE(je.debit, 0)) - SUM(COALESCE(je.credit, 0))
+                WHEN coa.account_type IN ('Liability', 'Equity') THEN 
+                    SUM(COALESCE(je.credit, 0)) - SUM(COALESCE(je.debit, 0))
+                ELSE 0
+            END AS balance
+        FROM chart_of_accounts coa
+        INNER JOIN journal_entries je ON je.account_id = coa.id
         $whereSql
-        AND coa.account_type IN ('Asset','Liability','Equity')
-        GROUP BY coa.id
-        ORDER BY FIELD(coa.account_type, 'Asset','Liability','Equity'), coa.account_name
+        " . ($where ? "AND" : "WHERE") . " coa.account_type IN ('Asset','Liability','Equity')
+        GROUP BY coa.id, coa.account_name, coa.account_type
+        HAVING ABS(balance) > 0.01
+        ORDER BY 
+            FIELD(coa.account_type, 'Asset','Liability','Equity'), 
+            coa.account_name
     ";
 
         $result = $this->conn->query($sql);
         $balances = [];
 
-        if ($result && $result->num_rows) {
+        if ($result && $result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
+                $row['balance'] = floatval($row['balance']);
                 $balances[] = $row;
             }
         }
 
+        // Calculate Net Income or Net Loss (Revenue - Expenses)
+        $netIncomeSql = "
+        SELECT 
+            SUM(CASE WHEN coa.account_type = 'Revenue' THEN je.credit - je.debit ELSE 0 END) as total_revenue,
+            SUM(CASE WHEN coa.account_type = 'Expense' THEN je.debit - je.credit ELSE 0 END) as total_expenses
+        FROM journal_entries je
+        INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
+        $whereSql
+        " . ($where ? "AND" : "WHERE") . " coa.account_type IN ('Revenue', 'Expense')
+    ";
+
+        $netIncomeResult = $this->conn->query($netIncomeSql);
+        $netIncomeRow = $netIncomeResult->fetch_assoc();
+
+        $totalRevenue = floatval($netIncomeRow['total_revenue'] ?? 0);
+        $totalExpenses = floatval($netIncomeRow['total_expenses'] ?? 0);
+        $netIncome = $totalRevenue - $totalExpenses;
+
+        // Add net income/loss to the balances array as a special entry
+        if (abs($netIncome) > 0.01) {
+            $balances[] = [
+                'id' => 'net_income',
+                'account_name' => $netIncome >= 0 ? 'Net Income' : 'Net Loss',
+                'account_type' => 'Equity',
+                'balance' => $netIncome,
+                'is_net_income' => true,
+                'is_loss' => $netIncome < 0
+            ];
+        }
+
         return $balances;
     }
+
     //Income Statemnet
     public function getIncomeStatement($month = null, $year = null)
     {
@@ -586,58 +656,256 @@ class JournalEntries
 
         return $balances;
     }
-    //Cash Flow Statement
-    public function getCashFlow($month = null, $year = null)
-    {
-        $where = [];
+    // Cash Flow Statement
+   public function getCashFlow($month = null, $year = null)
+{
+    $dateConditions = [];
+    $filterApplied = false;
 
-        if ($month) $where[] = "MONTH(j.date) = " . intval($month);
-        if ($year)  $where[] = "YEAR(j.date) = " . intval($year);
+    if (!empty($month) && strtolower($month) !== 'all') {
+        $dateConditions[] = "MONTH(t.transaction_date) = " . intval($month);
+        $filterApplied = true;
+    }
+    if (!empty($year) && strtolower($year) !== 'all') {
+        $dateConditions[] = "YEAR(t.transaction_date) = " . intval($year);
+        $filterApplied = true;
+    }
 
-        $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+    $dateWhere = $dateConditions ? " AND " . implode(" AND ", $dateConditions) : "";
 
-        $sql = "
-        SELECT 
-            coa.account_name, 
-            coa.cash_flow_category, 
-            SUM(j.debit - j.credit) AS balance
-        FROM journal_entries j
-        JOIN chart_of_accounts coa ON j.account_id = coa.id
-        $whereSql
-        AND coa.cash_flow_category IS NOT NULL
-        GROUP BY coa.id
-        ORDER BY FIELD(coa.cash_flow_category, 'Operating', 'Investing', 'Financing'), coa.account_name
+    $cashAccountSql = "
+        SELECT id FROM chart_of_accounts 
+        WHERE account_type = 'Asset'
+        AND (
+            account_name = 'Cash'
+            OR account_name = 'Cash in Bank'
+            OR account_name = 'Cash on Hand'
+            OR (LOWER(account_name) LIKE '%cash%' AND LOWER(account_name) NOT LIKE '%petty%')
+        )
+        ORDER BY 
+            CASE 
+                WHEN account_name = 'Cash' THEN 1
+                WHEN account_name = 'Cash in Bank' THEN 2
+                WHEN account_name = 'Cash on Hand' THEN 3
+                ELSE 4
+            END
+        LIMIT 1
     ";
-
-        $result = $this->conn->query($sql);
-        $entries = [];
-
-        if ($result && $result->num_rows) {
-            while ($row = $result->fetch_assoc()) {
-                $entries[] = $row;
-            }
-        }
-
-        $cashFlows = [
+    $cashAccountResult = $this->conn->query($cashAccountSql);
+    if (!$cashAccountResult || $cashAccountResult->num_rows == 0) {
+        return [
             'Operating' => [],
             'Investing' => [],
             'Financing' => [],
-            'NetCash' => 0
+            'NetCash' => 0,
+            'BeginningCash' => 0,
+            'EndingCash' => 0
         ];
+    }
+    $cashAccountRow = $cashAccountResult->fetch_assoc();
+    $cashAccountId = $cashAccountRow['id'];
 
-        foreach ($entries as $entry) {
-            $category = ucfirst(strtolower($entry['cash_flow_category']));
-            $balance = $entry['balance'];
+    $beginningCash = 0;
+    if ($filterApplied) {
+        $beginningCashSql = "
+            SELECT 
+                COALESCE(SUM(j.debit), 0) - COALESCE(SUM(j.credit), 0) as beginning_balance
+            FROM journal_entries j
+            JOIN transactions t ON j.transaction_id = t.id
+            WHERE j.account_id = $cashAccountId
+        ";
+        if ($month && strtolower($month) !== 'all' && $year && strtolower($year) !== 'all') {
+            $beginningCashSql .= " AND t.transaction_date < '" . $year . "-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01'";
+        } elseif ($year && strtolower($year) !== 'all') {
+            $beginningCashSql .= " AND YEAR(t.transaction_date) < " . intval($year);
+        }
+        $beginningResult = $this->conn->query($beginningCashSql);
+        if ($beginningResult) {
+            $beginningRow = $beginningResult->fetch_assoc();
+            $beginningCash = floatval($beginningRow['beginning_balance'] ?? 0);
+        }
+    }
 
-            if (in_array($category, ['Operating', 'Investing', 'Financing'])) {
-                $cashFlows[$category][] = [
-                    'name' => $entry['account_name'],
-                    'balance' => $balance
+    $cashTransactionsSql = "
+        SELECT DISTINCT j.transaction_id 
+        FROM journal_entries j
+        JOIN transactions t ON j.transaction_id = t.id
+        WHERE j.account_id = $cashAccountId
+        $dateWhere
+    ";
+    $cashTransResult = $this->conn->query($cashTransactionsSql);
+    $transactionIds = [];
+    if ($cashTransResult && $cashTransResult->num_rows > 0) {
+        while ($row = $cashTransResult->fetch_assoc()) {
+            $transactionIds[] = intval($row['transaction_id']);
+        }
+    }
+    if (empty($transactionIds)) {
+        return [
+            'Operating' => [],
+            'Investing' => [],
+            'Financing' => [],
+            'NetCash' => 0,
+            'BeginningCash' => $beginningCash,
+            'EndingCash' => $beginningCash
+        ];
+    }
+
+    $idsList = implode(',', $transactionIds);
+    $sql = "
+        SELECT 
+            j.transaction_id,
+            t.transaction_date,
+            t.description as transaction_description,
+            j.description as entry_description,
+            j.account_id,
+            j.debit,
+            j.credit,
+            coa.account_name,
+            coa.account_type,
+            coa.cash_flow_category
+        FROM journal_entries j
+        JOIN transactions t ON j.transaction_id = t.id
+        JOIN chart_of_accounts coa ON j.account_id = coa.id
+        WHERE j.transaction_id IN ($idsList)
+        ORDER BY t.transaction_date, j.transaction_id, j.account_id
+    ";
+    $result = $this->conn->query($sql);
+    if (!$result) {
+        return [
+            'Operating' => [],
+            'Investing' => [],
+            'Financing' => [],
+            'NetCash' => 0,
+            'BeginningCash' => $beginningCash,
+            'EndingCash' => $beginningCash
+        ];
+    }
+
+    $transactions = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $transactionId = $row['transaction_id'];
+            if (!isset($transactions[$transactionId])) {
+                $transactions[$transactionId] = [
+                    'date' => $row['transaction_date'],
+                    'description' => $row['transaction_description'] ?: $row['entry_description'],
+                    'accounts' => []
                 ];
-                $cashFlows['NetCash'] += $balance;
+            }
+            $transactions[$transactionId]['accounts'][] = $row;
+        }
+    }
+
+    $cashFlows = [
+        'Operating' => [],
+        'Investing' => [],
+        'Financing' => [],
+        'NetCash' => 0,
+        'BeginningCash' => $beginningCash,
+        'EndingCash' => 0
+    ];
+
+    foreach ($transactions as $transactionId => $transaction) {
+        $cashAccount = null;
+        $otherAccounts = [];
+        foreach ($transaction['accounts'] as $account) {
+            if ($account['account_id'] == $cashAccountId) {
+                $cashAccount = $account;
+            } else {
+                $otherAccounts[] = $account;
             }
         }
+        if (!$cashAccount || empty($otherAccounts)) continue;
+        $otherAccount = $otherAccounts[0];
+        $cashImpact = floatval($cashAccount['debit']) - floatval($cashAccount['credit']);
+        if (abs($cashImpact) < 0.01) continue;
+        $category = $otherAccount['cash_flow_category'];
+        if (!$category || trim($category) == '') {
+            $accountType = $otherAccount['account_type'];
+            if (in_array($accountType, ['Revenue', 'Expense'])) $category = 'Operating';
+            elseif ($accountType == 'Asset') $category = 'Investing';
+            elseif (in_array($accountType, ['Liability', 'Equity'])) $category = 'Financing';
+            else $category = 'Operating';
+        }
+        $category = ucfirst(strtolower(trim($category)));
+        if (!in_array($category, ['Operating', 'Investing', 'Financing'])) $category = 'Operating';
+        $accountName = $otherAccount['account_name'];
+        $description = $transaction['description'] ?: $accountName;
+        if ($cashImpact > 0) {
+            if (stripos($accountName, 'revenue') !== false || stripos($accountName, 'sales') !== false) $name = "Cash received from customers";
+            elseif (stripos($accountName, 'capital') !== false) $name = "Owner's capital contribution";
+            elseif (stripos($accountName, 'loan') !== false || stripos($accountName, 'payable') !== false) $name = "Proceeds from " . strtolower($accountName);
+            else $name = "Cash received from " . strtolower($description);
+        } else {
+            if (stripos($accountName, 'rent') !== false) $name = "Cash paid for rent";
+            elseif (stripos($accountName, 'salary') !== false || stripos($accountName, 'salaries') !== false) $name = "Cash paid for salaries";
+            elseif (stripos($accountName, 'utilities') !== false || stripos($accountName, 'utility') !== false) $name = "Cash paid for utilities";
+            elseif (stripos($accountName, 'expense') !== false) {
+                $expenseName = str_replace([' Expense', ' expense'], '', $accountName);
+                $name = "Cash paid for " . strtolower($expenseName);
+            } elseif (stripos($accountName, 'equipment') !== false || stripos($accountName, 'property') !== false) $name = "Purchase of " . strtolower($accountName);
+            elseif (stripos($accountName, 'inventory') !== false) $name = "Cash paid to suppliers";
+            elseif (stripos($accountName, 'cost of goods sold') !== false || stripos($accountName, 'cogs') !== false) $name = "Cash paid to suppliers";
+            else $name = "Cash paid for " . strtolower($description);
+        }
+        $cashFlows[$category][] = ['name' => $name, 'balance' => $cashImpact];
+        $cashFlows['NetCash'] += $cashImpact;
+    }
 
-        return $cashFlows;
+    if (!$filterApplied) {
+        $cashFlows['BeginningCash'] = 0;
+    }
+
+    $cashFlows['EndingCash'] = $cashFlows['BeginningCash'] + $cashFlows['NetCash'];
+    return $cashFlows;
+}
+
+
+    public function getTotalsByMonth($month, $year)
+    {
+        $sql = "SELECT 
+                SUM(CASE WHEN coa.account_type = 'Revenue' THEN je.credit - je.debit ELSE 0 END) AS total_revenue,
+                SUM(CASE WHEN coa.account_type = 'Expense' THEN je.debit - je.credit ELSE 0 END) AS total_expenses
+            FROM journal_entries je
+            INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
+            INNER JOIN transactions t ON t.id = je.transaction_id
+            WHERE MONTH(t.transaction_date) = ? AND YEAR(t.transaction_date) = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $month, $year);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    public function getExpenseBreakdown($month, $year)
+    {
+        $sql = "SELECT 
+                coa.account_name, 
+                SUM(je.debit - je.credit) AS total
+            FROM journal_entries je
+            INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
+            INNER JOIN transactions t ON t.id = je.transaction_id
+            WHERE coa.account_type = 'Expense' 
+              AND MONTH(t.transaction_date) = ? 
+              AND YEAR(t.transaction_date) = ?
+            GROUP BY coa.account_name";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $month, $year);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getRecentTransactions()
+    {
+        $sql = "SELECT reference_no, description, transaction_date, total_amount 
+            FROM transactions 
+            ORDER BY transaction_date DESC 
+            LIMIT 5";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 }

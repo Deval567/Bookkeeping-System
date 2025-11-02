@@ -120,7 +120,7 @@ class ChartofAccounts
     }
     public function isAccountExists()
     {
-        $sql = "SELECT * FROM chart_of_accounts WHERE account_name = ?";
+        $sql = "SELECT * FROM chart_of_accounts WHERE account_name = ? AND account_type = ? AND cash_flow_category = ?";
         $stmt = mysqli_stmt_init($this->conn);
 
         if (!mysqli_stmt_prepare($stmt, $sql)) {
@@ -128,7 +128,7 @@ class ChartofAccounts
             return false;
         }
 
-        mysqli_stmt_bind_param($stmt, "s", $this->account_name);
+        mysqli_stmt_bind_param($stmt, "sss", $this->account_name, $this->account_type, $this->cash_flow_category);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 

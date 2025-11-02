@@ -18,13 +18,11 @@ $balances = $journal->getBalanceSheet($month, $year);
     <div class="mb-4 flex justify-between items-center">
         <div>
             <h2 class="text-2xl font-semibold"><?= $title ?></h2>
-            <p class="text-gray-600">Summary of account balances.</p>
+            <p class="text-gray-600">Assets = Liabilities + Equity</p>
         </div>
 
-        <!-- Filter Form -->
         <div class="bg-white p-4 rounded shadow">
             <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-
                 <!-- Month -->
                 <div class="sm:w-48">
                     <label class="block text-sm text-gray-700 mb-1">Filter by Month</label>
@@ -64,26 +62,30 @@ $balances = $journal->getBalanceSheet($month, $year);
         </div>
     </div>
 
-    <!-- Balance Sheet Table -->
     <?php if (empty($balances)): ?>
         <div class="bg-white rounded-lg shadow p-8 text-center">
             <p class="text-gray-500 font-semibold">No Balance Sheet Records Found</p>
         </div>
     <?php else: ?>
         <?php
-        // Separate accounts by type
         $assets = [];
         $liabilities = [];
         $equities = [];
+        $netIncome = 0;
 
         $totalAssets = 0;
         $totalLiabilities = 0;
         $totalEquity = 0;
 
         foreach ($balances as $bal) {
-            $balance = $bal['balance']; // keep actual sign
+            $balance = floatval($bal['balance']);
             $type = strtoupper($bal['account_type']);
-            if ($type == 'ASSET') {
+
+            // Check if this is the Net Income entry
+            if (isset($bal['is_net_income']) && $bal['is_net_income']) {
+                $netIncome = $balance;
+                $totalEquity += $balance;
+            } elseif ($type == 'ASSET') {
                 $assets[] = ['name' => $bal['account_name'], 'balance' => $balance];
                 $totalAssets += $balance;
             } elseif ($type == 'LIABILITY') {
@@ -95,75 +97,200 @@ $balances = $journal->getBalanceSheet($month, $year);
             }
         }
 
-        $maxRows = max(count($assets), count($liabilities), count($equities));
+        function displayAmount($amt)
+        {
+            return $amt < 0 ? '(' . number_format(abs($amt), 2) . ')' : number_format($amt, 2);
+        }
         ?>
 
         <div class="bg-white rounded-lg shadow">
-            <div class="p-6 border-b border-gray-200 bg-gray-50">
-                <h2 class="text-2xl font-semibold text-gray-800">Balance Sheet</h2>
-                <p class="text-gray-500 mt-1 text-sm">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-red-700 to-red-800">
+                <h2 class="text-3xl font-bold text-white">Balance Sheet</h2>
+                <p class="text-red-100 mt-1">
                     As of
-                    <?= !empty($month) ? date('F', mktime(0, 0, 0, intval($month), 1)) : "all months" ?>
-                    <?= !empty($year) ? htmlspecialchars($year) : "all years" ?>
+                    <?= !empty($month) ? date('F', mktime(0, 0, 0, intval($month), 1)) : "All Months" ?>
+                    <?= !empty($year) ? htmlspecialchars($year) : "All Years" ?>
                 </p>
             </div>
 
-            <table class="min-w-full bg-white border border-gray-200">
-                <thead>
-                    <tr class="bg-red-700 text-white">
-                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Assets</th>
-                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Liabilities</th>
-                        <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Equity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php for ($i = 0; $i < $maxRows; $i++): ?>
-                        <tr class="hover:scale-[1.02] transition-transform duration-150 hover:bg-gray-100">
-                            <!-- Asset Column -->
-                            <td class="py-2 px-4 border-r font-semibold border-gray-200">
-                                <?php if (isset($assets[$i])): ?>
-                                    <?= htmlspecialchars($assets[$i]['name']) ?>: <?= number_format($assets[$i]['balance'], 2) ?>
-                                <?php endif; ?>
-                            </td>
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
 
-                            <!-- Liability Column -->
-                            <td class="py-2 px-4 border-r font-semibold border-gray-200">
-                                <?php if (isset($liabilities[$i])): ?>
-                                    <?= htmlspecialchars($liabilities[$i]['name']) ?>: <?= number_format($liabilities[$i]['balance'], 2) ?>
-                                <?php endif; ?>
-                            </td>
+                <!-- LEFT SIDE: ASSETS -->
+                <div class="space-y-4">
+                    <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-700">
+                        <h3 class="text-xl font-bold text-red-900 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            ASSETS
+                        </h3>
 
-                            <!-- Equity Column -->
-                            <td class="py-2 px-4 font-semibold border-r border-gray-200">
-                                <?php if (isset($equities[$i])): ?>
-                                    <?= htmlspecialchars($equities[$i]['name']) ?>: <?= number_format($equities[$i]['balance'], 2) ?>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endfor; ?>
+                        <?php if (empty($assets)): ?>
+                            <div class="py-3 px-4 text-gray-500 italic text-center">No assets</div>
+                        <?php else: ?>
+                            <div class="space-y-2">
+                                <?php foreach ($assets as $asset): ?>
+                                    <div class="flex justify-between py-2 px-4 bg-white rounded hover:bg-red-100 transition-colors">
+                                        <span class="text-gray-800"><?= htmlspecialchars($asset['name']) ?></span>
+                                        <span class="font-semibold text-gray-900"><?= displayAmount($asset['balance']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
 
-                    <!-- Totals Row -->
-                    <tr class="bg-gray-50 font-bold">
-                        <td class="py-2 px-4 border-t text-right border-gray-300">Total Assets = <?= number_format(abs($totalAssets), 2) ?></td>
-                        <td colspan="2" class="py-2 px-4 border-t text-center border-gray-300">Total Liabilities + Equity = <?= number_format(abs($totalLiabilities + $totalEquity), 2) ?></td>
-                    </tr>
-                </tbody>
-            </table>
+                        <div class="flex justify-between py-3 px-4 bg-red-700 text-white rounded font-bold text-lg mt-4">
+                            <span>Total Assets</span>
+                            <span><?= displayAmount($totalAssets) ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDE: LIABILITIES + EQUITY -->
+                <div class="space-y-4">
+
+                    <!-- LIABILITIES Section -->
+                    <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-700">
+                        <h3 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            LIABILITIES
+                        </h3>
+
+                        <?php if (empty($liabilities)): ?>
+                            <div class="py-2 px-4 text-gray-500 italic text-center">No liabilities</div>
+                        <?php else: ?>
+                            <div class="space-y-2">
+                                <?php foreach ($liabilities as $liability): ?>
+                                    <div class="flex justify-between py-2 px-4 bg-white rounded hover:bg-blue-100 transition-colors">
+                                        <span class="text-gray-800"><?= htmlspecialchars($liability['name']) ?></span>
+                                        <span class="font-semibold text-gray-900"><?= displayAmount($liability['balance']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="flex justify-between py-2 px-4 bg-blue-700 text-white rounded font-bold mt-3">
+                            <span>Total Liabilities</span>
+                            <span><?= displayAmount($totalLiabilities) ?></span>
+                        </div>
+                    </div>
+
+                    <!-- EQUITY Section -->
+                    <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-700">
+                        <h3 class="text-xl font-bold text-green-900 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            EQUITY
+                        </h3>
+
+                        <?php if (empty($equities) && abs($netIncome) < 0.01): ?>
+                            <div class="py-2 px-4 text-gray-500 italic text-center">No equity accounts</div>
+                        <?php else: ?>
+                            <div class="space-y-2">
+                                <?php foreach ($equities as $equity): ?>
+                                    <div class="flex justify-between py-2 px-4 bg-white rounded hover:bg-green-100 transition-colors">
+                                        <span class="text-gray-800"><?= htmlspecialchars($equity['name']) ?></span>
+                                        <span class="font-semibold text-gray-900"><?= displayAmount($equity['balance']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+
+                                <!-- Net Income or Net Loss Line -->
+                                <?php if (abs($netIncome) > 0.01): ?>
+                                    <?php if ($netIncome >= 0): ?>
+                                        <!-- Net Income (Profit) -->
+                                        <div class="flex justify-between py-2 px-4 bg-green-200 rounded font-semibold border border-green-400">
+                                            <span class="text-green-900 flex items-center">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                                </svg>
+                                                Net Income
+                                            </span>
+                                            <span class="text-green-900"><?= displayAmount($netIncome) ?></span>
+                                        </div>
+                                    <?php else: ?>
+                                        <!-- Net Loss -->
+                                        <div class="flex justify-between py-2 px-4 bg-red-200 rounded font-semibold border border-red-400">
+                                            <span class="text-red-900 flex items-center">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                                                </svg>
+                                                Net Loss
+                                            </span>
+                                            <span class="text-red-900"><?= displayAmount($netIncome) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="flex justify-between py-2 px-4 bg-green-700 text-white rounded font-bold mt-3">
+                            <span>Total Equity</span>
+                            <span><?= displayAmount($totalEquity) ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Total Liabilities + Equity -->
+                    <div class="flex justify-between py-4 px-4 bg-gradient-to-r from-purple-700 to-purple-800 text-white rounded-lg font-bold text-lg shadow-lg">
+                        <span>Total Liabilities + Equity</span>
+                        <span><?= displayAmount($totalLiabilities + $totalEquity) ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Check -->
+            <div class="px-6 pb-6">
+                <?php
+                $difference = abs($totalAssets - ($totalLiabilities + $totalEquity));
+                if ($difference > 0.01): ?>
+                    <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                        <div class="flex items-start">
+                            <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-red-800 font-bold">⚠️ Warning: Balance Sheet does not balance!</p>
+                                <div class="text-red-700 text-sm mt-2 space-y-1">
+                                    <p>Assets: <span class="font-semibold"><?= displayAmount($totalAssets) ?></span></p>
+                                    <p>Liabilities + Equity: <span class="font-semibold"><?= displayAmount($totalLiabilities + $totalEquity) ?></span></p>
+                                    <p>Difference: <span class="font-semibold"><?= displayAmount($difference) ?></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-green-800 font-bold">✓ Balance Sheet is balanced</p>
+                                <p class="text-green-700 text-sm mt-1">
+                                    Assets (<?= displayAmount($totalAssets) ?>) = Liabilities (<?= displayAmount($totalLiabilities) ?>) + Equity (<?= displayAmount($totalEquity) ?>)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
-        <!-- Download Button -->
+
         <div class="flex justify-end my-4">
             <button
                 command="show-modal"
                 commandfor="download-dialog"
-                class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-md shadow-md transition duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 <span>Download PDF</span>
             </button>
         </div>
     <?php endif; ?>
-
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
@@ -192,31 +319,22 @@ $balances = $journal->getBalanceSheet($month, $year);
                                 Do you want to download a PDF of Balance Sheet for
                                 <span class="font-semibold">
                                     <?php
-                                    $label = "All Months & Years"; // Default value
-
-                                    // Both month and a specific year
-                                    if (!empty($month) && !empty($year) && $year !== 'all') {
+                                    $label = "All Months & Years";
+                                    if (!empty($month) && !empty($year)) {
                                         $label = date("F", mktime(0, 0, 0, $month, 1)) . " " . $year;
-
-                                        // Month selected but year is empty or "all"
-                                    } elseif (!empty($month) && (empty($year) || $year === 'all')) {
+                                    } elseif (!empty($month)) {
                                         $label = date("F", mktime(0, 0, 0, $month, 1)) . " (All Years)";
-
-                                        // Year selected but month is empty
-                                    } elseif (empty($month) && !empty($year) && $year !== 'all') {
+                                    } elseif (!empty($year)) {
                                         $label = "All Months " . $year;
                                     }
-
                                     echo $label;
                                     ?>
                                 </span>
                             </p>
-
                         </div>
                     </div>
                 </div>
 
-                <!-- Form (Only Hidden Inputs) -->
                 <form action="../controllers/balancesheet.controller.php" method="POST" target="_blank" class="px-6 pb-4">
                     <input type="hidden" name="action" value="download_pdf">
                     <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
@@ -234,7 +352,6 @@ $balances = $journal->getBalanceSheet($month, $year);
                         </button>
                     </div>
                 </form>
-
             </el-dialog-panel>
         </div>
     </dialog>

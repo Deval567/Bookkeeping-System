@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>General Ledger</title>
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             color: #111827;
             margin: 0;
             padding: 20px;
@@ -14,7 +15,7 @@
 
         .header {
             margin-bottom: 20px;
-            border-bottom: 2px solid #000;
+            border-bottom: 3px solid #b91c1c;
             padding-bottom: 10px;
         }
 
@@ -37,195 +38,314 @@
             margin: 0 0 5px 0;
             font-size: 18px;
             font-weight: bold;
+            color: #b91c1c;
         }
 
         .company-info p {
             margin: 0;
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
         }
 
-        h2 {
+        .statement-title {
             text-align: center;
-            margin: 15px 0 5px 0;
-            font-size: 16px;
+            margin: 20px 0 15px 0;
+            background-color: #b91c1c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
         }
 
-        .period {
-            text-align: center;
-            margin: 0 0 20px 0;
+        .statement-title h2 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .statement-title p {
+            margin: 0;
             font-size: 11px;
-            font-style: italic;
+        }
+
+        .account-section {
+            margin-bottom: 25px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .account-header {
-            background-color: #f3f4f6;
-            padding: 10px;
-            margin-top: 20px;
-            margin-bottom: 5px;
-            border: 1px solid #333;
-            border-radius: 4px;
+            background-color: white;
+            border-bottom: 2px solid #d1d5db;
+            padding: 12px 15px;
         }
 
-        .account-header h3 {
+        .account-header table {
+            width: 100%;
+            border: none;
+        }
+
+        .account-header td {
+            border: none;
+            padding: 0;
+        }
+
+        .account-info h3 {
             margin: 0 0 3px 0;
             font-size: 14px;
             font-weight: bold;
+            color: #111827;
         }
 
-        .account-header .info {
-            font-size: 11px;
-            color: #666;
+        .account-info p {
+            margin: 0;
+            font-size: 10px;
+            color: #6b7280;
         }
 
-        .account-header .balance {
-            float: right;
+        .account-balance {
+            text-align: right;
+        }
+
+        .account-balance .label {
+            font-size: 10px;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+
+        .account-balance .amount {
+            font-size: 16px;
             font-weight: bold;
-            color: #b91c1c;
-            font-size: 13px;
         }
 
-        table.statement {
+        .balance-positive {
+            color: #15803d;
+        }
+
+        .balance-negative {
+            color: #dc2626;
+        }
+
+        table.ledger-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
         }
 
-        table.statement th,
-        table.statement td {
-            border: 1px solid #333;
-            padding: 8px;
+        table.ledger-table th,
+        table.ledger-table td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 10px;
         }
 
-        table.statement th {
+        table.ledger-table th {
             background-color: #b91c1c;
             color: white;
             font-weight: bold;
             text-align: left;
+            font-size: 11px;
         }
 
-        .text-right {
+        table.ledger-table th.text-right {
             text-align: right;
+        }
+
+        .entry-row {
+            background-color: white;
+        }
+
+        .entry-date {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .entry-particulars .main {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .entry-particulars .reference {
+            color: #6b7280;
+        }
+
+        .entry-particulars .description {
+            color: #6b7280;
+            font-size: 9px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-weight: 500;
+            color: #111827;
         }
 
         .total-row {
             font-weight: bold;
-            background-color: #f3f4f6;
+            background-color: #f9fafb;
+            border-top: 2px solid #d1d5db;
         }
 
         .empty-notice {
             text-align: center;
             padding: 20px;
             font-style: italic;
-            color: #666;
+            color: #9ca3af;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
         }
     </style>
 </head>
+
 <body>
 
-<?php
-// Get logo as base64
-$logoPath = dirname(__DIR__) . '/images/logo.jpg';
-$logoData = '';
-if (file_exists($logoPath)) {
-    $logoData = base64_encode(file_get_contents($logoPath));
-}
-?>
-
-<!-- Header -->
-<div class="header">
-    <table>
-        <tr>
-            <td style="width: 90px;">
-                <?php if ($logoData): ?>
-                    <img src="data:image/jpeg;base64,<?= $logoData ?>" alt="Logo">
-                <?php endif; ?>
-            </td>
-            <td>
-                <div class="company-info">
-                    <h1>JJ&C Stainless Steel Fabrication Services</h1>
-                    <p>Gonzaga Ext., Barangay Taculing, Bacolod City, Philippines</p>
-                </div>
-            </td>
-        </tr>
-    </table>
-</div>
-
-<!-- Title -->
-<h2>General Ledger</h2>
-<p class="period">
-    For the period of 
-    <?php 
-    if (!empty($month) && !empty($year)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' ' . $year;
-    } elseif (!empty($month)) {
-        $dateObj = DateTime::createFromFormat('!m', $month);
-        $monthName = $dateObj ? $dateObj->format('F') : $month;
-        echo $monthName . ' (All Years)';
-    } elseif (!empty($year)) {
-        echo 'All Months ' . $year;
-    } else {
-        echo 'All Periods';
+    <?php
+    // Get logo as base64
+    $logoPath = dirname(__DIR__) . '/images/logo.jpg';
+    $logoData = '';
+    if (file_exists($logoPath)) {
+        $logoData = base64_encode(file_get_contents($logoPath));
     }
     ?>
-</p>
 
-<?php if (empty($ledgers)): ?>
-    <p class="empty-notice">No Ledger Entries Found</p>
-<?php else: ?>
-    <?php foreach ($ledgers as $ledger): ?>
-        <?php
-        $finalBalance = end($ledger['entries'])['balance'] ?? 0;
-        reset($ledger['entries']);
-        ?>
-        
-        <!-- Account Header -->
-        <div class="account-header">
-            <span class="balance">Balance: <?= number_format($finalBalance, 2) ?></span>
-            <h3><?= htmlspecialchars($ledger['account_name']) ?></h3>
-            <div class="info"><?= htmlspecialchars($ledger['account_type']) ?></div>
-        </div>
-
-        <table class="statement">
-            <thead>
-                <tr>
-                    <th style="width: 12%;">Date</th>
-                    <th style="width: 38%;">Particulars</th>
-                    <th style="width: 16%;" class="text-right">Debit</th>
-                    <th style="width: 16%;" class="text-right">Credit</th>
-                    <th style="width: 18%;" class="text-right">Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($ledger['entries'] as $entry): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($entry['journal_date']) ?></td>
-                        <td>
-                            <?= htmlspecialchars($entry['transaction_type'] ?? 'General Entry') ?>
-                            <?php if (!empty($entry['reference_no'] ?? '')): ?>
-                                - <?= htmlspecialchars($entry['reference_no']) ?>
-                            <?php endif; ?>
-                            <br>
-                            <small style="color: #666;"><?= htmlspecialchars($entry['description'] ?? '') ?></small>
-                        </td>
-                        <td class="text-right"><?= number_format($entry['debit'], 2) ?></td>
-                        <td class="text-right"><?= number_format($entry['credit'], 2) ?></td>
-                        <td class="text-right"><?= number_format($entry['balance'], 2) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                
-                <tr class="total-row">
-                    <td colspan="2">Total for <?= htmlspecialchars($ledger['account_name']) ?></td>
-                    <td class="text-right"><?= number_format(array_sum(array_column($ledger['entries'], 'debit')), 2) ?></td>
-                    <td class="text-right"><?= number_format(array_sum(array_column($ledger['entries'], 'credit')), 2) ?></td>
-                    <td class="text-right"><?= number_format($finalBalance, 2) ?></td>
-                </tr>
-            </tbody>
+    <!-- Header -->
+    <div class="header">
+        <table>
+            <tr>
+                <td style="width: 90px;">
+                    <?php if ($logoData): ?>
+                        <img src="data:image/jpeg;base64,<?= $logoData ?>" alt="Logo">
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <div class="company-info">
+                        <h1>JJ&C Stainless Steel Fabrication Services</h1>
+                        <p>Gonzaga Ext., Barangay Taculing, Bacolod City, Philippines</p>
+                    </div>
+                </td>
+            </tr>
         </table>
-    <?php endforeach; ?>
-<?php endif; ?>
+    </div>
+
+    <!-- Statement Title -->
+    <div class="statement-title">
+        <h2>GENERAL LEDGER</h2>
+        <p>
+            For the Period of
+            <?php
+            if (!empty($month) && !empty($year)) {
+                $dateObj = DateTime::createFromFormat('!m', $month);
+                $monthName = $dateObj ? $dateObj->format('F') : $month;
+                echo $monthName . ' ' . $year;
+            } elseif (!empty($month)) {
+                $dateObj = DateTime::createFromFormat('!m', $month);
+                $monthName = $dateObj ? $dateObj->format('F') : $month;
+                echo $monthName . ' (All Years)';
+            } elseif (!empty($year)) {
+                echo 'All Months ' . $year;
+            } else {
+                echo 'All Periods';
+            }
+            ?>
+        </p>
+    </div>
+
+    <?php if (empty($ledgers)): ?>
+        <p class="empty-notice">No Ledger Entries Found</p>
+    <?php else: ?>
+        <?php foreach ($ledgers as $ledger): ?>
+            <?php
+            $finalBalance = end($ledger['entries'])['balance'] ?? 0;
+            reset($ledger['entries']);
+            ?>
+
+            <!-- Account Section -->
+            <div class="account-section">
+                <!-- Account Header -->
+                <div class="account-header">
+                    <table>
+                        <tr>
+                            <td style="width: 70%;">
+                                <div class="account-info">
+                                    <h3><?= htmlspecialchars($ledger['account_name']) ?></h3>
+                                    <p><?= htmlspecialchars($ledger['account_type']) ?></p>
+                                </div>
+                            </td>
+                            <td style="width: 30%;">
+                                <div class="account-balance">
+                                    <div class="label">Current Balance</div>
+                                    <div class="amount <?= $finalBalance < 0 ? 'balance-negative' : 'balance-positive' ?>">
+                                        <?= number_format(abs($finalBalance), 2) ?>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Ledger Table -->
+                <table class="ledger-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">Date</th>
+                            <th style="width: 38%;">Particulars</th>
+                            <th style="width: 16%;" class="text-right">Debit</th>
+                            <th style="width: 16%;" class="text-right">Credit</th>
+                            <th style="width: 18%;" class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($ledger['entries'] as $entry): ?>
+                            <tr class="entry-row">
+                                <td class="entry-date">
+                                    <?= date('Y-m-d', strtotime($entry['journal_date'])) ?>
+                                </td>
+                                <td class="entry-particulars">
+                                    <span class="main">
+                                        <?= htmlspecialchars($entry['transaction_type'] ?? 'General Entry') ?>
+                                    </span>
+                                    <?php if (!empty($entry['reference_no'] ?? '')): ?>
+                                        <span class="reference"> - <?= htmlspecialchars($entry['reference_no']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($entry['description'] ?? '')): ?>
+                                        <span class="description"><?= htmlspecialchars($entry['description']) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="amount-cell">
+                                    <?= $entry['debit'] > 0 ? number_format($entry['debit'], 2) : '0.00' ?>
+                                </td>
+                                <td class="amount-cell">
+                                    <?= $entry['credit'] > 0 ? number_format($entry['credit'], 2) : '0.00' ?>
+                                </td>
+                                <td class="amount-cell">
+                                    <?= number_format($entry['balance'], 2) ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+
+                        <!-- Total Row -->
+                        <tr class="total-row">
+                            <td colspan="2">
+                                <strong>Total for <?= htmlspecialchars($ledger['account_name']) ?></strong>
+                            </td>
+                            <td class="amount-cell">
+                                <strong><?= number_format(array_sum(array_column($ledger['entries'], 'debit')), 2) ?></strong>
+                            </td>
+                            <td class="amount-cell">
+                                <strong><?= number_format(array_sum(array_column($ledger['entries'], 'credit')), 2) ?></strong>
+                            </td>
+                            <td class="amount-cell">
+                                <strong><?= number_format($finalBalance, 2) ?></strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php endforeach; ?>
+    <?php endif; ?>
 
 </body>
+
 </html>

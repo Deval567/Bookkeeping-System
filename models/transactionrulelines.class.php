@@ -40,15 +40,16 @@ class TransactionRuleLines
 
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
-                $conditions[] = "(rule_name LIKE '%$search%' 
-                              OR account_name LIKE '%$search%' 
-                              OR entry_type LIKE '%$search%')";
+                $conditions[] = "(tr.rule_name LIKE '%$search%' 
+                          OR coa.account_name LIKE '%$search%' 
+                          OR trl.entry_type LIKE '%$search%')";
             }
 
             if ($entry_type !== '') {
                 $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
-                $conditions[] = "entry_type = '$entry_type'";
+                $conditions[] = "trl.entry_type = '$entry_type'";
             }
+
             if ($rule_id !== '') {
                 $rule_id = mysqli_real_escape_string($this->conn, $rule_id);
                 $conditions[] = "trl.rule_id = '$rule_id'";
@@ -58,11 +59,12 @@ class TransactionRuleLines
         }
 
         $sql = "
-        SELECT COUNT(*) AS total
-        FROM transaction_rule_lines AS trl
-        JOIN transaction_rules AS tr ON trl.rule_id = tr.id
-        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
-        $filterQuery";
+    SELECT COUNT(*) AS total
+    FROM transaction_rule_lines AS trl
+    JOIN transaction_rules AS tr ON trl.rule_id = tr.id
+    JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
+    $filterQuery";
+
         $result = mysqli_query($this->conn, $sql);
         $row = mysqli_fetch_assoc($result);
 
@@ -75,53 +77,51 @@ class TransactionRuleLines
         $offset = ($page - 1) * $this->limit;
 
         $search = trim($search);
-        $filterQuery = '';
+        $conditions = [];
 
-        if ($search !== '' || $entry_type !== '' || $rule_id !== '') {
-            $conditions = [];
-
-            if ($search !== '') {
-                $search = mysqli_real_escape_string($this->conn, $search);
-                $conditions[] = "(rule_name LIKE '%$search%' 
-                              OR account_name LIKE '%$search%' 
-                              OR entry_type LIKE '%$search%')";
-            }
-
-            if ($entry_type !== '') {
-                $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
-                $conditions[] = "entry_type = '$entry_type'";
-            }
-            if ($rule_id !== '') {
-                $rule_id = mysqli_real_escape_string($this->conn, $rule_id);
-                $conditions[] = "trl.rule_id = '$rule_id'";
-            }
-
-            $filterQuery = "WHERE " . implode(' AND ', $conditions);
+        if ($search !== '') {
+            $search = mysqli_real_escape_string($this->conn, $search);
+            $conditions[] = "(tr.rule_name LIKE '%$search%' 
+                  OR coa.account_name LIKE '%$search%' 
+                  OR trl.entry_type LIKE '%$search%')";
         }
 
+        if ($entry_type !== '') {
+            $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
+            $conditions[] = "LOWER(trl.entry_type) = LOWER('$entry_type')";
+        }
+
+        if ($rule_id !== '') {
+            $rule_id = mysqli_real_escape_string($this->conn, $rule_id);
+            $conditions[] = "trl.rule_id = '$rule_id'";
+        }
+
+        $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : '';
+
         $sql = "
-        SELECT
-    trl.id,
-    trl.rule_id,
-    tr.rule_name,
-    coa.id AS account_id,
-    coa.account_name,
-    trl.entry_type
-FROM transaction_rule_lines AS trl
-JOIN transaction_rules AS tr ON trl.rule_id = tr.id
-JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
-        $filterQuery
-        ORDER BY tr.rule_name ASC 
-        LIMIT {$this->limit} OFFSET {$offset}";
+    SELECT
+        trl.id,
+        trl.rule_id,
+        tr.rule_name,
+        coa.id AS account_id,
+        coa.account_name,
+        trl.entry_type
+    FROM transaction_rule_lines AS trl
+    JOIN transaction_rules AS tr ON trl.rule_id = tr.id
+    JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
+    $filterQuery
+    ORDER BY tr.rule_name ASC
+    LIMIT {$this->limit} OFFSET {$offset}";
 
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalPages($search = '', $filter = '')
+    public function getTotalPages($search = '', $entry_type = '', $rule_id = '')
     {
-        return ceil($this->getTotalRuleLines($search, $filter) / $this->limit);
+        return ceil($this->getTotalRuleLines($search, $entry_type, $rule_id) / $this->limit);
     }
+
     public function isRuleLineExists($rule_id, $account_id, $entry_type, $exclude_id = null)
     {
         $sql = "SELECT id FROM transaction_rule_lines 

@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             color: #111827;
             margin: 0;
             padding: 20px;
@@ -14,7 +14,7 @@
 
         .header {
             margin-bottom: 20px;
-            border-bottom: 2px solid #000;
+            border-bottom: 3px solid #b91c1c;
             padding-bottom: 10px;
         }
 
@@ -37,67 +37,105 @@
             margin: 0 0 5px 0;
             font-size: 18px;
             font-weight: bold;
+            color: #b91c1c;
         }
 
         .company-info p {
             margin: 0;
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
         }
 
-        h2 {
+        .statement-title {
             text-align: center;
-            margin: 15px 0 5px 0;
+            margin: 20px 0 15px 0;
+            background-color: #b91c1c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .statement-title h2 {
+            margin: 0 0 5px 0;
             font-size: 16px;
+            font-weight: bold;
         }
 
-        .period {
-            text-align: center;
-            margin: 0 0 20px 0;
+        .statement-title p {
+            margin: 0;
             font-size: 11px;
-            font-style: italic;
         }
 
-        table.statement {
+        table.income-statement {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
 
-        table.statement th,
-        table.statement td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: left;
+        table.income-statement td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
         }
 
-        table.statement th {
-            background-color: #b91c1c;
-            color: white;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        table.statement td {
-            text-align: right;
-        }
-
-        .total-row {
+        .section-header {
             background-color: #f3f4f6;
             font-weight: bold;
+            font-size: 12px;
+            color: #374151;
+            border-top: 2px solid #9ca3af;
         }
 
-        .net-row {
-            background-color: #e5e7eb;
+        .account-line td {
+            background-color: white;
+        }
+
+        .account-line:hover td {
+            background-color: #f9fafb;
+        }
+
+        .account-name {
+            text-align: left;
+            padding-left: 20px;
+            color: #4b5563;
+        }
+
+        .account-amount {
+            text-align: right;
+            padding-right: 20px;
+            color: #111827;
+        }
+
+        .total-line {
+            background-color: #fef2f2;
             font-weight: bold;
-            text-align: center !important;
+            border-top: 2px solid #9ca3af;
+        }
+
+        .total-line td {
+            color: #111827;
+        }
+
+        .net-income-line {
+            background-color: #fee2e2;
+            font-weight: bold;
+            border-top: 3px solid #991b1b;
+            border-bottom: 3px solid #991b1b;
+        }
+
+        .net-income-positive {
+            color: #15803d;
+        }
+
+        .net-income-negative {
+            color: #dc2626;
         }
 
         .empty-notice {
             text-align: center;
             padding: 20px;
             font-style: italic;
-            color: #666;
+            color: #9ca3af;
+            background-color: #f9fafb;
         }
     </style>
 </head>
@@ -111,35 +149,29 @@ if (file_exists($logoPath)) {
     $logoData = base64_encode(file_get_contents($logoPath));
 }
 
-// Process entries
+// Process income statement data
 $revenues = [];
 $expenses = [];
 $totalRevenue = 0;
 $totalExpenses = 0;
 
 foreach ($entries as $entry) {
-    $balance = $entry['balance'];
-
+    $balance = floatval($entry['balance']);
     if (strtoupper($entry['account_type']) === 'REVENUE') {
-        $revenues[] = [
-            'name' => $entry['account_name'],
-            'balance' => $balance
-        ];
+        $revenues[] = ['name' => $entry['account_name'], 'balance' => $balance];
         $totalRevenue += $balance;
-    }
-
-    if (strtoupper($entry['account_type']) === 'EXPENSE') {
+    } elseif (strtoupper($entry['account_type']) === 'EXPENSE') {
         $balance = abs($balance);
-        $expenses[] = [
-            'name' => $entry['account_name'],
-            'balance' => $balance
-        ];
+        $expenses[] = ['name' => $entry['account_name'], 'balance' => $balance];
         $totalExpenses += $balance;
     }
 }
 
-$maxRows = max(count($revenues), count($expenses));
 $netIncome = $totalRevenue - $totalExpenses;
+
+function displayAmount($amt) {
+    return $amt < 0 ? '(' . number_format(abs($amt), 2) . ')' : number_format($amt, 2);
+}
 ?>
 
 <!-- Header -->
@@ -161,65 +193,84 @@ $netIncome = $totalRevenue - $totalExpenses;
     </table>
 </div>
 
-<!-- Title -->
-<h2>Income Statement</h2>
-<p class="period">
-    For the period ending 
-    <?php 
-    if (!empty($month) && !empty($year)) {
-        echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' ' . $year;
-    } elseif (!empty($month)) {
-        echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' (All Years)';
-    } elseif (!empty($year)) {
-        echo 'All Months ' . $year;
-    } else {
-        echo 'All Periods';
-    }
-    ?>
-</p>
+<!-- Statement Title -->
+<div class="statement-title">
+    <h2>INCOME STATEMENT</h2>
+    <p>
+        For the Period Ended:
+        <?php 
+        if (!empty($month) && !empty($year)) {
+            echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' ' . $year;
+        } elseif (!empty($month)) {
+            echo date('F', mktime(0, 0, 0, intval($month), 1)) . ' (All Years)';
+        } elseif (!empty($year)) {
+            echo 'All Months ' . $year;
+        } else {
+            echo 'All Periods';
+        }
+        ?>
+    </p>
+</div>
 
 <?php if (empty($entries)): ?>
     <p class="empty-notice">No Income Statement Records Found</p>
 <?php else: ?>
-    <table class="statement">
-        <thead>
-            <tr>
-                <th style="width: 50%;">Revenue</th>
-                <th style="width: 50%;">Expenses</th>
-            </tr>
-        </thead>
+    <!-- Income Statement Table -->
+    <table class="income-statement">
         <tbody>
-            <?php for ($i = 0; $i < $maxRows; $i++): ?>
-                <tr>
-                    <td>
-                        <?php if (isset($revenues[$i])): ?>
-                            <?= htmlspecialchars($revenues[$i]['name']) ?>: <?= number_format($revenues[$i]['balance'], 2) ?>
-                        <?php else: ?>
-                            &nbsp;
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if (isset($expenses[$i])): ?>
-                            <?= htmlspecialchars($expenses[$i]['name']) ?>: <?= number_format($expenses[$i]['balance'], 2) ?>
-                        <?php else: ?>
-                            &nbsp;
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endfor; ?>
-
-            <tr class="total-row">
-                <td>Total Revenue: <?= number_format($totalRevenue, 2) ?></td>
-                <td>Total Expenses: <?= number_format($totalExpenses, 2) ?></td>
+            <!-- REVENUE SECTION -->
+            <tr class="section-header">
+                <td colspan="2">REVENUE</td>
             </tr>
 
-            <tr class="net-row">
-                <td colspan="2">
-                    <?php if ($netIncome >= 0): ?>
-                        Net Income: <?= number_format($netIncome, 2) ?>
-                    <?php else: ?>
-                        Net Loss: <?= number_format(abs($netIncome), 2) ?>
-                    <?php endif; ?>
+            <?php if (empty($revenues)): ?>
+                <tr>
+                    <td colspan="2" class="empty-notice">No Revenue Records Found</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($revenues as $rev): ?>
+                    <tr class="account-line">
+                        <td class="account-name"><?= htmlspecialchars($rev['name']) ?></td>
+                        <td class="account-amount"><?= displayAmount($rev['balance']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+
+            <tr class="total-line">
+                <td class="account-name">Total Revenue</td>
+                <td class="account-amount"><?= displayAmount($totalRevenue) ?></td>
+            </tr>
+
+            <!-- EXPENSES SECTION -->
+            <tr class="section-header">
+                <td colspan="2">EXPENSES</td>
+            </tr>
+
+            <?php if (empty($expenses)): ?>
+                <tr>
+                    <td colspan="2" class="empty-notice">No Expense Records Found</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($expenses as $exp): ?>
+                    <tr class="account-line">
+                        <td class="account-name"><?= htmlspecialchars($exp['name']) ?></td>
+                        <td class="account-amount"><?= displayAmount($exp['balance']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+
+            <tr class="total-line">
+                <td class="account-name">Total Expenses</td>
+                <td class="account-amount"><?= displayAmount($totalExpenses) ?></td>
+            </tr>
+
+            <!-- NET INCOME/LOSS -->
+            <tr class="net-income-line">
+                <td class="account-name" style="font-size: 13px;">
+                    <?= $netIncome >= 0 ? 'NET INCOME' : 'NET LOSS' ?>
+                </td>
+                <td class="account-amount <?= $netIncome >= 0 ? 'net-income-positive' : 'net-income-negative' ?>" style="font-size: 13px;">
+                    <?= displayAmount(abs($netIncome)) ?>
                 </td>
             </tr>
         </tbody>
