@@ -547,7 +547,7 @@ $rule_lines  = $transactionRuleLines->getPaginatedRuleLines($page, $search, $ent
                             <div class="text-left">
                                 <h3 id="delete-dialog-title-<?= $line['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Transaction Rule Line</h3>
                                 <p class="mt-2 text-sm text-gray-600">
-                                    Are you sure you want to delete <span class="font-semibold"><?= ($line['rule_name']) ?></span>? This action cannot be undone.
+                                    Are you sure you want to delete <span class="font-semibold"><?= ($line['rule_name']) ?></span> with account <span class="font-semibold"><?= ($line['account_name']) ?></span> and entry <span class="font-semibold"><?= (ucfirst($line['entry_type'])) ?></span>? This action cannot be undone.
                                 </p>
                             </div>
                         </div>

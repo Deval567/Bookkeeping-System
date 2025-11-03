@@ -25,9 +25,9 @@ class Transaction
         $this->total_amount = $total_amount;
         $this->encoded_by = $encoded_by;
     }
-   public function getTransactionsGroupByRuleName()
-{
-    $sql = "
+    public function getTransactionsGroupByRuleName()
+    {
+        $sql = "
         SELECT 
             tr.category,
             t.rule_id, 
@@ -39,9 +39,9 @@ class Transaction
         ORDER BY tr.category ASC, tr.rule_name ASC
     ";
 
-    $result = mysqli_query($this->conn, $sql);
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
-}
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
 
 
     public function getTransactionsGroupedByUser()
@@ -181,6 +181,25 @@ class Transaction
     {
         return ceil($this->getTotalTransactions($search, $filterRuleId, $filterUsername, $filterDateFrom, $filterDateTo) / $this->limit);
     }
+    public function isTransactionExists($reference_no, $exclude_id = null)
+    {
+        if ($exclude_id) {
+            $sql = "SELECT COUNT(*) AS count FROM transactions WHERE reference_no = ? AND id != ?";
+            $stmt = mysqli_prepare($this->conn, $sql);
+            mysqli_stmt_bind_param($stmt, 'si', $reference_no, $exclude_id);
+        } else {
+            $sql = "SELECT COUNT(*) AS count FROM transactions WHERE reference_no = ?";
+            $stmt = mysqli_prepare($this->conn, $sql);
+            mysqli_stmt_bind_param($stmt, 's', $reference_no);
+        }
+
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
+        return $row['count'] > 0;
+    }
+
     public function createTransaction($rule_id, $reference_no, $description, $transaction_date, $total_amount, $created_by)
     {
         $sql = "INSERT INTO transactions (rule_id, reference_no, description, transaction_date, total_amount, created_by) 

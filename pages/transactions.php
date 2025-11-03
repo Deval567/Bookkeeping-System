@@ -536,9 +536,9 @@ $queryParams = '&' . http_build_query([
                                 </svg>
                             </div>
                             <div class="text-left">
-                                <h3 id="delete-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Transaction Rule</h3>
+                                <h3 id="delete-dialog-title-<?= $transaction['id'] ?>" class="text-lg font-semibold text-gray-900">Delete Transaction</h3>
                                 <p class="mt-2 text-sm text-gray-600">
-                                    Are you sure you want to delete <span class="font-semibold"><?= ($transaction['rule_name']) ?></span>? This action cannot be undone.
+                                    Are you sure you want to delete <span class="font-semibold"><?= ($transaction['rule_name']) ?></span> reference # <span class="font-semibold"><?= ($transaction['reference_no']) ?></span> with a total amount of <span class="font-semibold"><?= ($transaction['total_amount']) ?></span> as of <span class="font-semibold"><?= ($transaction['transaction_date']) ?></span> ? This action cannot be undone.
                                 </p>
                             </div>
                         </div>
