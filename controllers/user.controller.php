@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: ../pages/users.php");
+    header("Location: ../pages/dashboard.php");
     exit;
 }
 if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
@@ -14,7 +14,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SE
 }
 if ($_SESSION['role'] !== 'Admin') {
     $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
-    header("Location: ../pages/dashboard.php"); 
+    header("Location: ../pages/dashboard.php");
     exit();
 }
 
@@ -81,33 +81,31 @@ switch ($action) {
         break;
 
     case "update_user":
-         $errors = $validator->validate($username, $password, $roles);
+        $errors = $validator->validate($username, $password, $roles);
         if (!empty($errors)) {
             $_SESSION['user_errors'] = $errors;
             header("Location: ../pages/users.php");
             exit;
-        }else{
-        $existingUser = $user->isUserExists();
-
-        if ($existingUser && $existingUser['id'] != $id) {
-            $_SESSION['user_errors'] = ["Username already taken by another user."];
-            header("Location: ../pages/users.php");
-            exit;
-        }
-
-        $updated = $user->updateUser($id, $username, $password, $roles);
-        $errors = $validator->validate($username, $password, $roles);
-        if ($updated) {
-            $_SESSION['success_message'] = "User updated successfully.";
-            header("Location: ../pages/users.php");
-            exit;
         } else {
-            $_SESSION['user_errors'] = ["Failed to update user. Please try again."];
-            header("Location: ../pages/users.php");
-            exit;
-        }
-        break;
-        }
-    }
-        
+            $existingUser = $user->isUserExists();
 
+            if ($existingUser && $existingUser['id'] != $id) {
+                $_SESSION['user_errors'] = ["Username already taken by another user."];
+                header("Location: ../pages/users.php");
+                exit;
+            }
+
+            $updated = $user->updateUser($id, $username, $password, $roles);
+            $errors = $validator->validate($username, $password, $roles);
+            if ($updated) {
+                $_SESSION['success_message'] = "User updated successfully.";
+                header("Location: ../pages/users.php");
+                exit;
+            } else {
+                $_SESSION['user_errors'] = ["Failed to update user. Please try again."];
+                header("Location: ../pages/users.php");
+                exit;
+            }
+            break;
+        }
+}
