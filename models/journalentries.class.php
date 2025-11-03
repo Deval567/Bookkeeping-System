@@ -657,23 +657,23 @@ class JournalEntries
         return $balances;
     }
     // Cash Flow Statement
-   public function getCashFlow($month = null, $year = null)
-{
-    $dateConditions = [];
-    $filterApplied = false;
+    public function getCashFlow($month = null, $year = null)
+    {
+        $dateConditions = [];
+        $filterApplied = false;
 
-    if (!empty($month) && strtolower($month) !== 'all') {
-        $dateConditions[] = "MONTH(t.transaction_date) = " . intval($month);
-        $filterApplied = true;
-    }
-    if (!empty($year) && strtolower($year) !== 'all') {
-        $dateConditions[] = "YEAR(t.transaction_date) = " . intval($year);
-        $filterApplied = true;
-    }
+        if (!empty($month) && strtolower($month) !== 'all') {
+            $dateConditions[] = "MONTH(t.transaction_date) = " . intval($month);
+            $filterApplied = true;
+        }
+        if (!empty($year) && strtolower($year) !== 'all') {
+            $dateConditions[] = "YEAR(t.transaction_date) = " . intval($year);
+            $filterApplied = true;
+        }
 
-    $dateWhere = $dateConditions ? " AND " . implode(" AND ", $dateConditions) : "";
+        $dateWhere = $dateConditions ? " AND " . implode(" AND ", $dateConditions) : "";
 
-    $cashAccountSql = "
+        $cashAccountSql = "
         SELECT id FROM chart_of_accounts 
         WHERE account_type = 'Asset'
         AND (
@@ -691,68 +691,68 @@ class JournalEntries
             END
         LIMIT 1
     ";
-    $cashAccountResult = $this->conn->query($cashAccountSql);
-    if (!$cashAccountResult || $cashAccountResult->num_rows == 0) {
-        return [
-            'Operating' => [],
-            'Investing' => [],
-            'Financing' => [],
-            'NetCash' => 0,
-            'BeginningCash' => 0,
-            'EndingCash' => 0
-        ];
-    }
-    $cashAccountRow = $cashAccountResult->fetch_assoc();
-    $cashAccountId = $cashAccountRow['id'];
+        $cashAccountResult = $this->conn->query($cashAccountSql);
+        if (!$cashAccountResult || $cashAccountResult->num_rows == 0) {
+            return [
+                'Operating' => [],
+                'Investing' => [],
+                'Financing' => [],
+                'NetCash' => 0,
+                'BeginningCash' => 0,
+                'EndingCash' => 0
+            ];
+        }
+        $cashAccountRow = $cashAccountResult->fetch_assoc();
+        $cashAccountId = $cashAccountRow['id'];
 
-    $beginningCash = 0;
-    if ($filterApplied) {
-        $beginningCashSql = "
+        $beginningCash = 0;
+        if ($filterApplied) {
+            $beginningCashSql = "
             SELECT 
                 COALESCE(SUM(j.debit), 0) - COALESCE(SUM(j.credit), 0) as beginning_balance
             FROM journal_entries j
             JOIN transactions t ON j.transaction_id = t.id
             WHERE j.account_id = $cashAccountId
         ";
-        if ($month && strtolower($month) !== 'all' && $year && strtolower($year) !== 'all') {
-            $beginningCashSql .= " AND t.transaction_date < '" . $year . "-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01'";
-        } elseif ($year && strtolower($year) !== 'all') {
-            $beginningCashSql .= " AND YEAR(t.transaction_date) < " . intval($year);
+            if ($month && strtolower($month) !== 'all' && $year && strtolower($year) !== 'all') {
+                $beginningCashSql .= " AND t.transaction_date < '" . $year . "-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01'";
+            } elseif ($year && strtolower($year) !== 'all') {
+                $beginningCashSql .= " AND YEAR(t.transaction_date) < " . intval($year);
+            }
+            $beginningResult = $this->conn->query($beginningCashSql);
+            if ($beginningResult) {
+                $beginningRow = $beginningResult->fetch_assoc();
+                $beginningCash = floatval($beginningRow['beginning_balance'] ?? 0);
+            }
         }
-        $beginningResult = $this->conn->query($beginningCashSql);
-        if ($beginningResult) {
-            $beginningRow = $beginningResult->fetch_assoc();
-            $beginningCash = floatval($beginningRow['beginning_balance'] ?? 0);
-        }
-    }
 
-    $cashTransactionsSql = "
+        $cashTransactionsSql = "
         SELECT DISTINCT j.transaction_id 
         FROM journal_entries j
         JOIN transactions t ON j.transaction_id = t.id
         WHERE j.account_id = $cashAccountId
         $dateWhere
     ";
-    $cashTransResult = $this->conn->query($cashTransactionsSql);
-    $transactionIds = [];
-    if ($cashTransResult && $cashTransResult->num_rows > 0) {
-        while ($row = $cashTransResult->fetch_assoc()) {
-            $transactionIds[] = intval($row['transaction_id']);
+        $cashTransResult = $this->conn->query($cashTransactionsSql);
+        $transactionIds = [];
+        if ($cashTransResult && $cashTransResult->num_rows > 0) {
+            while ($row = $cashTransResult->fetch_assoc()) {
+                $transactionIds[] = intval($row['transaction_id']);
+            }
         }
-    }
-    if (empty($transactionIds)) {
-        return [
-            'Operating' => [],
-            'Investing' => [],
-            'Financing' => [],
-            'NetCash' => 0,
-            'BeginningCash' => $beginningCash,
-            'EndingCash' => $beginningCash
-        ];
-    }
+        if (empty($transactionIds)) {
+            return [
+                'Operating' => [],
+                'Investing' => [],
+                'Financing' => [],
+                'NetCash' => 0,
+                'BeginningCash' => $beginningCash,
+                'EndingCash' => $beginningCash
+            ];
+        }
 
-    $idsList = implode(',', $transactionIds);
-    $sql = "
+        $idsList = implode(',', $transactionIds);
+        $sql = "
         SELECT 
             j.transaction_id,
             t.transaction_date,
@@ -770,139 +770,106 @@ class JournalEntries
         WHERE j.transaction_id IN ($idsList)
         ORDER BY t.transaction_date, j.transaction_id, j.account_id
     ";
-    $result = $this->conn->query($sql);
-    if (!$result) {
-        return [
+        $result = $this->conn->query($sql);
+        if (!$result) {
+            return [
+                'Operating' => [],
+                'Investing' => [],
+                'Financing' => [],
+                'NetCash' => 0,
+                'BeginningCash' => $beginningCash,
+                'EndingCash' => $beginningCash
+            ];
+        }
+
+        $transactions = [];
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $transactionId = $row['transaction_id'];
+                if (!isset($transactions[$transactionId])) {
+                    $transactions[$transactionId] = [
+                        'date' => $row['transaction_date'],
+                        'description' => $row['transaction_description'] ?: $row['entry_description'],
+                        'accounts' => []
+                    ];
+                }
+                $transactions[$transactionId]['accounts'][] = $row;
+            }
+        }
+
+        $cashFlows = [
             'Operating' => [],
             'Investing' => [],
             'Financing' => [],
             'NetCash' => 0,
             'BeginningCash' => $beginningCash,
-            'EndingCash' => $beginningCash
+            'EndingCash' => 0
         ];
-    }
 
-    $transactions = [];
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $transactionId = $row['transaction_id'];
-            if (!isset($transactions[$transactionId])) {
-                $transactions[$transactionId] = [
-                    'date' => $row['transaction_date'],
-                    'description' => $row['transaction_description'] ?: $row['entry_description'],
-                    'accounts' => []
-                ];
+        foreach ($transactions as $transactionId => $transaction) {
+            $cashAccount = null;
+            $otherAccounts = [];
+            foreach ($transaction['accounts'] as $account) {
+                if ($account['account_id'] == $cashAccountId) {
+                    $cashAccount = $account;
+                } else {
+                    $otherAccounts[] = $account;
+                }
             }
-            $transactions[$transactionId]['accounts'][] = $row;
-        }
-    }
-
-    $cashFlows = [
-        'Operating' => [],
-        'Investing' => [],
-        'Financing' => [],
-        'NetCash' => 0,
-        'BeginningCash' => $beginningCash,
-        'EndingCash' => 0
-    ];
-
-    foreach ($transactions as $transactionId => $transaction) {
-        $cashAccount = null;
-        $otherAccounts = [];
-        foreach ($transaction['accounts'] as $account) {
-            if ($account['account_id'] == $cashAccountId) {
-                $cashAccount = $account;
+            if (!$cashAccount || empty($otherAccounts)) continue;
+            $otherAccount = $otherAccounts[0];
+            $cashImpact = floatval($cashAccount['debit']) - floatval($cashAccount['credit']);
+            if (abs($cashImpact) < 0.01) continue;
+            $category = $otherAccount['cash_flow_category'];
+            if (!$category || trim($category) == '') {
+                $accountType = $otherAccount['account_type'];
+                if (in_array($accountType, ['Revenue', 'Expense'])) $category = 'Operating';
+                elseif ($accountType == 'Asset') $category = 'Investing';
+                elseif (in_array($accountType, ['Liability', 'Equity'])) $category = 'Financing';
+                else $category = 'Operating';
+            }
+            $category = ucfirst(strtolower(trim($category)));
+            if (!in_array($category, ['Operating', 'Investing', 'Financing'])) $category = 'Operating';
+            $accountName = $otherAccount['account_name'];
+            $description = $transaction['description'] ?: $accountName;
+            if ($cashImpact > 0) {
+                if (stripos($accountName, 'revenue') !== false || stripos($accountName, 'sales') !== false) $name = "Cash received from customers";
+                elseif (stripos($accountName, 'capital') !== false) $name = "Owner's capital contribution";
+                elseif (stripos($accountName, 'loan') !== false || stripos($accountName, 'payable') !== false) $name = "Proceeds from " . strtolower($accountName);
+                else $name = "Cash received from " . strtolower($description);
             } else {
-                $otherAccounts[] = $account;
+                if (stripos($accountName, 'rent') !== false) $name = "Cash paid for rent";
+                elseif (stripos($accountName, 'salary') !== false || stripos($accountName, 'salaries') !== false) $name = "Cash paid for salaries";
+                elseif (stripos($accountName, 'utilities') !== false || stripos($accountName, 'utility') !== false) $name = "Cash paid for utilities";
+                elseif (stripos($accountName, 'expense') !== false) {
+                    $expenseName = str_replace([' Expense', ' expense'], '', $accountName);
+                    $name = "Cash paid for " . strtolower($expenseName);
+                } elseif (stripos($accountName, 'equipment') !== false || stripos($accountName, 'property') !== false) $name = "Purchase of " . strtolower($accountName);
+                elseif (stripos($accountName, 'inventory') !== false) $name = "Cash paid to suppliers";
+                elseif (stripos($accountName, 'cost of goods sold') !== false || stripos($accountName, 'cogs') !== false) $name = "Cash paid to suppliers";
+                else $name = "Cash paid for " . strtolower($description);
             }
+            $cashFlows[$category][] = ['name' => $name, 'balance' => $cashImpact];
+            $cashFlows['NetCash'] += $cashImpact;
         }
-        if (!$cashAccount || empty($otherAccounts)) continue;
-        $otherAccount = $otherAccounts[0];
-        $cashImpact = floatval($cashAccount['debit']) - floatval($cashAccount['credit']);
-        if (abs($cashImpact) < 0.01) continue;
-        $category = $otherAccount['cash_flow_category'];
-        if (!$category || trim($category) == '') {
-            $accountType = $otherAccount['account_type'];
-            if (in_array($accountType, ['Revenue', 'Expense'])) $category = 'Operating';
-            elseif ($accountType == 'Asset') $category = 'Investing';
-            elseif (in_array($accountType, ['Liability', 'Equity'])) $category = 'Financing';
-            else $category = 'Operating';
+
+        if (!$filterApplied) {
+            $cashFlows['BeginningCash'] = 0;
         }
-        $category = ucfirst(strtolower(trim($category)));
-        if (!in_array($category, ['Operating', 'Investing', 'Financing'])) $category = 'Operating';
-        $accountName = $otherAccount['account_name'];
-        $description = $transaction['description'] ?: $accountName;
-        if ($cashImpact > 0) {
-            if (stripos($accountName, 'revenue') !== false || stripos($accountName, 'sales') !== false) $name = "Cash received from customers";
-            elseif (stripos($accountName, 'capital') !== false) $name = "Owner's capital contribution";
-            elseif (stripos($accountName, 'loan') !== false || stripos($accountName, 'payable') !== false) $name = "Proceeds from " . strtolower($accountName);
-            else $name = "Cash received from " . strtolower($description);
-        } else {
-            if (stripos($accountName, 'rent') !== false) $name = "Cash paid for rent";
-            elseif (stripos($accountName, 'salary') !== false || stripos($accountName, 'salaries') !== false) $name = "Cash paid for salaries";
-            elseif (stripos($accountName, 'utilities') !== false || stripos($accountName, 'utility') !== false) $name = "Cash paid for utilities";
-            elseif (stripos($accountName, 'expense') !== false) {
-                $expenseName = str_replace([' Expense', ' expense'], '', $accountName);
-                $name = "Cash paid for " . strtolower($expenseName);
-            } elseif (stripos($accountName, 'equipment') !== false || stripos($accountName, 'property') !== false) $name = "Purchase of " . strtolower($accountName);
-            elseif (stripos($accountName, 'inventory') !== false) $name = "Cash paid to suppliers";
-            elseif (stripos($accountName, 'cost of goods sold') !== false || stripos($accountName, 'cogs') !== false) $name = "Cash paid to suppliers";
-            else $name = "Cash paid for " . strtolower($description);
-        }
-        $cashFlows[$category][] = ['name' => $name, 'balance' => $cashImpact];
-        $cashFlows['NetCash'] += $cashImpact;
+
+        $cashFlows['EndingCash'] = $cashFlows['BeginningCash'] + $cashFlows['NetCash'];
+        return $cashFlows;
     }
 
-    if (!$filterApplied) {
-        $cashFlows['BeginningCash'] = 0;
-    }
-
-    $cashFlows['EndingCash'] = $cashFlows['BeginningCash'] + $cashFlows['NetCash'];
-    return $cashFlows;
-}
-
-
-    public function getTotalsByMonth($month, $year)
-    {
-        $sql = "SELECT 
-                SUM(CASE WHEN coa.account_type = 'Revenue' THEN je.credit - je.debit ELSE 0 END) AS total_revenue,
-                SUM(CASE WHEN coa.account_type = 'Expense' THEN je.debit - je.credit ELSE 0 END) AS total_expenses
-            FROM journal_entries je
-            INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
-            INNER JOIN transactions t ON t.id = je.transaction_id
-            WHERE MONTH(t.transaction_date) = ? AND YEAR(t.transaction_date) = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ii", $month, $year);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
-    }
-
-    public function getExpenseBreakdown($month, $year)
-    {
-        $sql = "SELECT 
-                coa.account_name, 
-                SUM(je.debit - je.credit) AS total
-            FROM journal_entries je
-            INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
-            INNER JOIN transactions t ON t.id = je.transaction_id
-            WHERE coa.account_type = 'Expense' 
-              AND MONTH(t.transaction_date) = ? 
-              AND YEAR(t.transaction_date) = ?
-            GROUP BY coa.account_name";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ii", $month, $year);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
 
     public function getRecentTransactions()
     {
-        $sql = "SELECT reference_no, description, transaction_date, total_amount 
-            FROM transactions 
-            ORDER BY transaction_date DESC 
-            LIMIT 5";
+        $sql = " SELECT t.id, t.reference_no, t.description, t.total_amount, t.transaction_date, t.rule_id, tr.rule_name, u.username
+        FROM transactions AS t
+        JOIN transaction_rules AS tr ON t.rule_id = tr.id
+        JOIN users AS u ON t.created_by = u.id
+        ORDER BY t.transaction_date DESC
+        LIMIT 5";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->get_result();

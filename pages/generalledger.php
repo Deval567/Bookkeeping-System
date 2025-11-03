@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
 $title = "General Ledger";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
@@ -185,34 +191,37 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                 </table>
             </div>
         <?php endforeach; ?>
-        
+
         <!-- Download Button -->
-    <div class="flex justify-end my-4">
-        <button
-            command="show-modal"
-            commandfor="download-dialog"
-            class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            <span>Download PDF</span>
-        </button>
-    </div>
+        <?php if ($role == 'Admin'): ?>
+
+            <div class="flex justify-end my-4">
+                <button
+                    command="show-modal"
+                    commandfor="download-dialog"
+                    class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <!-- Pagination -->
     <div class="flex justify-center my-4 space-x-2 pb-4">
         <?php if ($page > 1): ?>
             <a href="?page=<?= $page - 1 . $queryParams ?>"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                class="inline-flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                 </svg>
                 <span>Prev</span>
             </a>
-            <?php endif; ?>
+        <?php endif; ?>
 
         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
             <a href="?page=<?= $i . $queryParams ?>"
@@ -254,57 +263,57 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                             </svg>
                         </div>
 
-                    <div class="text-left">
-                        <h3 id="download-dialog-title" class="text-lg font-semibold text-gray-900">Download General Ledger</h3>
+                        <div class="text-left">
+                            <h3 id="download-dialog-title" class="text-lg font-semibold text-gray-900">Download General Ledger</h3>
 
-                        <p class="mt-2 text-sm text-gray-600">
-                            Do you want to download a PDF of General Ledger for
-                            <span class="font-semibold">
-                                <?php
-                                $label = "All Months & Years"; // Default value
+                            <p class="mt-2 text-sm text-gray-600">
+                                Do you want to download a PDF of General Ledger for
+                                <span class="font-semibold">
+                                    <?php
+                                    $label = "All Months & Years"; // Default value
 
-                                // Both month and a specific year
-                                if (!empty($month) && !empty($year) && $year !== 'all') {
-                                    $label = date("F", mktime(0, 0, 0, $month, 1)) . " " . $year;
+                                    // Both month and a specific year
+                                    if (!empty($month) && !empty($year) && $year !== 'all') {
+                                        $label = date("F", mktime(0, 0, 0, $month, 1)) . " " . $year;
 
-                                    // Month selected but year is empty or "all"
-                                } elseif (!empty($month) && (empty($year) || $year === 'all')) {
-                                    $label = date("F", mktime(0, 0, 0, $month, 1)) . " (All Years)";
+                                        // Month selected but year is empty or "all"
+                                    } elseif (!empty($month) && (empty($year) || $year === 'all')) {
+                                        $label = date("F", mktime(0, 0, 0, $month, 1)) . " (All Years)";
 
-                                    // Year selected but month is empty
-                                } elseif (empty($month) && !empty($year) && $year !== 'all') {
-                                    $label = "All Months " . $year;
-                                }
+                                        // Year selected but month is empty
+                                    } elseif (empty($month) && !empty($year) && $year !== 'all') {
+                                        $label = "All Months " . $year;
+                                    }
 
-                                echo $label;
-                                ?>
-                            </span>
-                        </p>
+                                    echo $label;
+                                    ?>
+                                </span>
+                            </p>
 
+                        </div>
                     </div>
                 </div>
-        </div>
 
-        <!-- Form (Only Hidden Inputs) -->
-        <form action="../controllers/generalledger.controller.php" method="POST" target="_blank" class="px-6 pb-4">
-            <input type="hidden" name="action" value="download_pdf">
-            <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
-            <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">
+                <!-- Form (Only Hidden Inputs) -->
+                <form action="../controllers/generalledger.controller.php" method="POST" target="_blank" class="px-6 pb-4">
+                    <input type="hidden" name="action" value="download_pdf">
+                    <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
+                    <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">
 
-            <!-- Buttons -->
-            <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
-                <button type="submit"
-                    class="inline-flex justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
-                    Download PDF
-                </button>
-                <button type="button" command="close" commandfor="download-dialog"
-                    class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
-                    Cancel
-                </button>
-            </div>
-        </form>
+                    <!-- Buttons -->
+                    <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">
+                        <button type="submit"
+                            class="inline-flex justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                            Download PDF
+                        </button>
+                        <button type="button" command="close" commandfor="download-dialog"
+                            class="mt-3 sm:mt-0 inline-flex justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
 
-        </el-dialog-panel>
+            </el-dialog-panel>
         </div>
     </dialog>
 </el-dialog>

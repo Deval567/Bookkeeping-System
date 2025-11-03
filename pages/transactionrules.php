@@ -1,4 +1,16 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You don't have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
+
+if ($_SESSION['role'] !== 'Admin') {
+    $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
+    header("Location: ../pages/dashboard.php"); 
+    exit();
+}
 $title = "Transaction Rules";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";

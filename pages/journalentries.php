@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
 $title = "Journal Entries";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
@@ -146,6 +152,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                 <?php endforeach; ?>
             </table>
         </div>
+        <?php if ($role == 'Admin'): ?>
         <div class="flex justify-end my-4">
             <button
                 command="show-modal"
@@ -157,6 +164,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                 <span>Download PDF</span>
             </button>
         </div>
+    <?php endif; ?>
     <?php endif; ?>
 
     <!-- Pagination -->

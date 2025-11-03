@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
 $title = "Income Statement";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
@@ -87,75 +93,77 @@ $netIncome = $totalRevenue - $totalExpenses;
                 </p>
             </div>
 
-        <div class="bg-white rounded-b-xl shadow overflow-hidden">
-            <table class="min-w-full border-t border-gray-200">
-                <thead>
-                    <tr class="bg-gray-50">
-                        <th class="py-2 px-4 text-left text-sm font-semibold text-gray-600 border-b">Account</th>
-                        <th class="py-2 px-4 text-right text-sm font-semibold text-gray-600 border-b">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="bg-gray-100">
-                        <td colspan="2" class="py-2 px-4 text-left font-bold text-gray-800 border-t border-gray-300">Revenue</td>
-                    </tr>
-                    <?php if (empty($revenues)): ?>
-                        <tr>
-                            <td colspan="2" class="py-2 px-4 text-gray-500 italic">No Revenue Records Found</td>
+            <div class="bg-white rounded-b-xl shadow overflow-hidden">
+                <table class="min-w-full border-t border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="py-2 px-4 text-left text-sm font-semibold text-gray-600 border-b">Account</th>
+                            <th class="py-2 px-4 text-right text-sm font-semibold text-gray-600 border-b">Amount</th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($revenues as $rev): ?>
-                            <tr class="hover:bg-gray-50 hover:scale-[1.02] transition">
-                                <td class="py-2 px-4 text-gray-700"><?= htmlspecialchars($rev['name']) ?></td>
-                                <td class="py-2 px-4 text-right text-gray-800"><?= number_format($rev['balance'], 2) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-
-                    <tr class="bg-red-50 font-bold border-t border-gray-300">
-                        <td class="py-2 px-4 text-gray-900">Total Revenue</td>
-                        <td class="py-2 px-4 text-right text-gray-900"><?= number_format($totalRevenue, 2) ?></td>
-                    </tr>
-
-                    <tr class="bg-gray-100">
-                        <td colspan="2" class="py-2 px-4 text-left font-bold text-gray-800 border-t border-gray-300 ">Expenses</td>
-                    </tr>
-                    <?php if (empty($expenses)): ?>
-                        <tr>
-                            <td colspan="2" class="py-2 px-4 text-gray-500 italic">No Expense Records Found</td>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-gray-100">
+                            <td colspan="2" class="py-2 px-4 text-left font-bold text-gray-800 border-t border-gray-300">Revenue</td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($expenses as $exp): ?>
-                            <tr class="hover:bg-gray-50 hover:scale-[1.02] transition ">
-                                <td class="py-2 px-4 text-gray-700"><?= htmlspecialchars($exp['name']) ?></td>
-                                <td class="py-2 px-4 text-right text-gray-800"><?= number_format($exp['balance'], 2) ?></td>
+                        <?php if (empty($revenues)): ?>
+                            <tr>
+                                <td colspan="2" class="py-2 px-4 text-gray-500 italic">No Revenue Records Found</td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                        <?php else: ?>
+                            <?php foreach ($revenues as $rev): ?>
+                                <tr class="hover:bg-gray-50 hover:scale-[1.02] transition">
+                                    <td class="py-2 px-4 text-gray-700"><?= htmlspecialchars($rev['name']) ?></td>
+                                    <td class="py-2 px-4 text-right text-gray-800"><?= number_format($rev['balance'], 2) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
 
-                    <tr class="bg-red-50 font-bold border-t border-gray-300">
-                        <td class="py-2 px-4 text-gray-900">Total Expenses</td>
-                        <td class="py-2 px-4 text-right text-gray-900"><?= number_format($totalExpenses, 2) ?></td>
-                    </tr>
+                        <tr class="bg-red-50 font-bold border-t border-gray-300">
+                            <td class="py-2 px-4 text-gray-900">Total Revenue</td>
+                            <td class="py-2 px-4 text-right text-gray-900"><?= number_format($totalRevenue, 2) ?></td>
+                        </tr>
 
-                    <tr class="bg-rose-100 font-bold border-t border-gray-300">
-                        <td class="py-3 px-4 text-gray-900"><?= $netIncome >= 0 ? 'Net Income' : 'Net Loss' ?></td>
-                        <td class="py-3 px-4 text-right <?= $netIncome >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                            <?= number_format(abs($netIncome), 2) ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <tr class="bg-gray-100">
+                            <td colspan="2" class="py-2 px-4 text-left font-bold text-gray-800 border-t border-gray-300 ">Expenses</td>
+                        </tr>
+                        <?php if (empty($expenses)): ?>
+                            <tr>
+                                <td colspan="2" class="py-2 px-4 text-gray-500 italic">No Expense Records Found</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($expenses as $exp): ?>
+                                <tr class="hover:bg-gray-50 hover:scale-[1.02] transition ">
+                                    <td class="py-2 px-4 text-gray-700"><?= htmlspecialchars($exp['name']) ?></td>
+                                    <td class="py-2 px-4 text-right text-gray-800"><?= number_format($exp['balance'], 2) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+
+                        <tr class="bg-red-50 font-bold border-t border-gray-300">
+                            <td class="py-2 px-4 text-gray-900">Total Expenses</td>
+                            <td class="py-2 px-4 text-right text-gray-900"><?= number_format($totalExpenses, 2) ?></td>
+                        </tr>
+
+                        <tr class="bg-rose-100 font-bold border-t border-gray-300">
+                            <td class="py-3 px-4 text-gray-900"><?= $netIncome >= 0 ? 'Net Income' : 'Net Loss' ?></td>
+                            <td class="py-3 px-4 text-right <?= $netIncome >= 0 ? 'text-green-600' : 'text-red-600' ?>">
+                                <?= number_format(abs($netIncome), 2) ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <div class="flex justify-end my-4">
-            <button command="show-modal" commandfor="download-dialog" class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                <span>Download PDF</span>
-            </button>
-        </div>
+        <?php if ($role == 'Admin'): ?>
+            <div class="flex justify-end my-4">
+                <button command="show-modal" commandfor="download-dialog" class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </main>
 

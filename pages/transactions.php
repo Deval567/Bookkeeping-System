@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
 $title = "Transactions";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
