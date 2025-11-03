@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: ../pages/users.php");
+    header("Location: ../pages/dashboard.php");
     exit;
 }
 
