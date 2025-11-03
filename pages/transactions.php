@@ -379,26 +379,26 @@ $queryParams = '&' . http_build_query([
                         <!-- Transaction Date -->
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Transaction Date</label>
-                            <input type="date" name="transaction_date" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            <input type="date" name="transaction_date" required class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                         </div>
 
                         <!-- Reference Number -->
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Reference Number #</label>
-                            <input type="text" placeholder="Enter Reference Number" name="reference_no" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            <input type="text" placeholder="Enter Reference Number" required name="reference_no" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                         </div>
 
                         <!-- Total Amount -->
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Total Amount</label>
-                            <input type="number" name="total_amount" placeholder="0.00" min="0" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                            <input type="number" name="total_amount" required placeholder="0.00" min="0" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                         </div>
                     </div>
 
                     <!-- Transaction Details -->
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Transaction Details</label>
-                        <textarea name="description" placeholder="Add a description for the transaction" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
+                        <textarea name="description" placeholder="Add a description for the transaction" required rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
                     </div>
 
                     <!-- Rule Lines Display -->
@@ -457,7 +457,7 @@ $queryParams = '&' . http_build_query([
                             <!-- Transaction Name -->
                             <div>
                                 <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
-                                <select id="rule_id_<?= $transaction['id'] ?>" name="rule_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+                                <select id="rule_id_<?= $transaction['id'] ?>" name="rule_id" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
                                     <option value="">--All Transaction Names--</option>
                                     <?php
                                     $currentCategory = '';
@@ -477,26 +477,26 @@ $queryParams = '&' . http_build_query([
                             <!-- Transaction Date -->
                             <div>
                                 <label class="block text-sm text-gray-700 mb-1">Transaction Date</label>
-                                <input type="date" name="transaction_date" value="<?= $transaction['transaction_date'] ?>" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                                <input type="date" name="transaction_date" value="<?= $transaction['transaction_date'] ?>" required class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                             </div>
 
                             <!-- Reference Number -->
                             <div>
                                 <label class="block text-sm text-gray-700 mb-1">Reference Number #</label>
-                                <input type="text" name="reference_no" value="<?= $transaction['reference_no'] ?>" placeholder="Enter Reference Number" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                                <input type="text" name="reference_no" required value="<?= $transaction['reference_no'] ?>" placeholder="Enter Reference Number" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                             </div>
 
                             <!-- Total Amount -->
                             <div>
                                 <label class="block text-sm text-gray-700 mb-1">Total Amount</label>
-                                <input type="number" name="total_amount" value="<?= $transaction['total_amount'] ?>" min="0" step="0.01" placeholder="0.00" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
+                                <input type="number" name="total_amount" value="<?= $transaction['total_amount'] ?>" required min="0" step="0.01" placeholder="0.00" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                             </div>
                         </div>
 
                         <!-- Transaction Details -->
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Transaction Details</label>
-                            <textarea name="description" placeholder="Add a description for the transaction" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"><?= $transaction['description'] ?></textarea>
+                            <textarea name="description" required placeholder="Add a description for the transaction" rows="3"  class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none"><?= $transaction['description'] ?></textarea>
                         </div>
 
                         <!-- Rule Lines Display -->
@@ -631,7 +631,7 @@ $queryParams = '&' . http_build_query([
                         <!-- Amount -->
                         <div class="flex-1 min-w-[150px]">
                             <label class="block text-sm text-gray-700 mb-1">Amount</label>
-                            <input type="number" placeholder="0.00" min="0" name="amounts[]" step="0.01"
+                            <input type="number" placeholder="0.00" required min="0" name="amounts[]" step="0.01"
                                 value="${amount}"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:ring focus:ring-blue-400 focus:outline-none">
                         </div>

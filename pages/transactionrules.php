@@ -297,7 +297,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
                     <input type="hidden" name="action" value="add_rule">
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
-                        <input type="text" name="rule_name" placeholder="Enter a Transaction Name"
+                        <input type="text" required name="rule_name" placeholder="Enter a Transaction Name"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" />
                     </div>
 
@@ -316,7 +316,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
 
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Description</label>
-                        <textarea name="description" placeholder="Enter a Description for the Transaction Rule"
+                        <textarea name="description" required placeholder="Enter a Description for the Transaction Rule"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
                     </div>
 
@@ -368,7 +368,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Transaction Name</label>
-                            <input type="text" name="rule_name" value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
+                            <input type="text" name="rule_name" required value="<?= ($transaction['rule_name']) ?>" placeholder="Enter an Account Name"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
                         </div>
 
@@ -387,7 +387,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Description</label>
-                            <textarea name="description" placeholder="Enter a Description for the Account"
+                            <textarea name="description" required placeholder="Enter a Description for the Account"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($transaction['description']) ?></textarea>
                         </div>
 

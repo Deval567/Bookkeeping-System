@@ -309,7 +309,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
                     <input type="hidden" name="action" value="add_account">
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                        <input type="text" name="acc_name" placeholder="Enter an Account Name"
+                        <input type="text" required name="acc_name" placeholder="Enter an Account Name"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" />
                     </div>
 
@@ -341,7 +341,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
 
                     <div>
                         <label class="block text-sm text-gray-700 mb-1">Description</label>
-                        <textarea name="description" placeholder="Enter a Description for the Account"
+                        <textarea required name="description" placeholder="Enter a Description for the Account"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"></textarea>
                     </div>
 
@@ -393,8 +393,8 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Account Name</label>
-                            <input type="text" name="acc_name" value="<?= ($chart['account_name']) ?>" placeholder="Enter an Account Name"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" required />
+                            <input type="text" required name="acc_name" value="<?= ($chart['account_name']) ?>" placeholder="Enter an Account Name"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none" requiredd />
                         </div>
 
                         <div>
@@ -423,7 +423,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
 
                         <div>
                             <label class="block text-sm text-gray-700 mb-1">Description</label>
-                            <textarea name="description" placeholder="Enter a Description for the Account"
+                            <textarea name="description" required placeholder="Enter a Description for the Account"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:ring focus:ring-blue-400 focus:outline-none"><?= ($chart['description']) ?></textarea>
                         </div>
 
