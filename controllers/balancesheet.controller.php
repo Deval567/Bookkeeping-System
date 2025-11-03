@@ -7,6 +7,21 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../index.php");
     exit;
 }
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    header("Location: ../pages/users.php");
+    exit;
+}
+
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
+if ($_SESSION['role'] !== 'Admin') {
+    $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
+    header("Location: ../pages/dashboard.php"); 
+    exit();
+}
 
 require_once '../configs/dbc.php';
 require_once '../models/journalentries.class.php';

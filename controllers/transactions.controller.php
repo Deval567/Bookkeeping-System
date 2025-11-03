@@ -7,6 +7,17 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../index.php");
     exit;
 }
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    header("Location: ../pages/users.php");
+    exit;
+}
+
+if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+    header("Location: ../index.php");
+    exit();
+}
+
 
 $id = $_POST['id'] ?? null;
 $rule_id = $_POST['rule_id'] ?? null;
