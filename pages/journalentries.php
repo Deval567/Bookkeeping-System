@@ -282,6 +282,9 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                     if (!empty($selectedRuleName)) {
                                         $label .= " - " . htmlspecialchars($selectedRuleName);
                                     }
+                                    else{
+                                        $label .= " - All Journal Entries";
+                                    }
                                     
                                     echo $label;
                                     ?>
