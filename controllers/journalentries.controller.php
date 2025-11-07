@@ -34,7 +34,8 @@ $journal = new JournalEntries($conn, null, null, null, null, null, null);
 
 $month = $_POST['month'] ?? '';
 $year = $_POST['year'] ?? '';
-$entries = $journal->getAllJournalEntries($month, $year);
+$rule_id = $_POST['rule_id'] ?? '';
+$entries = $journal->getAllJournalEntries($month, $year,$rule_id);
 
 ob_start();
 include('../templates/journalentries.template.php');

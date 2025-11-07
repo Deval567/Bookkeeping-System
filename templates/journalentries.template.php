@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Journal Entries</title>
@@ -11,6 +12,7 @@
             margin: 0;
             padding: 20px;
         }
+
         .statement-title {
             text-align: center;
             margin: 20px 0 15px 0;
@@ -128,39 +130,58 @@
         }
     </style>
 </head>
+
 <body>
 
-<?php
-// Get logo as base64
-$logoPath = dirname(__DIR__) . '/images/logo.jpg';
-$logoData = '';
-if (file_exists($logoPath)) {
-    $logoData = base64_encode(file_get_contents($logoPath));
-}
-?>
+    <?php
+    // Get logo as base64
+    $logoPath = dirname(__DIR__) . '/images/logo.jpg';
+    $logoData = '';
+    if (file_exists($logoPath)) {
+        $logoData = base64_encode(file_get_contents($logoPath));
+    }
 
-<!-- Header -->
-<div class="header">
-    <table>
-        <tr>
-            <td style="width: 90px;">
-                <?php if ($logoData): ?>
-                    <img src="data:image/jpeg;base64,<?= $logoData ?>" alt="Logo">
-                <?php endif; ?>
-            </td>
-            <td>
-                <div class="company-info">
-                    <h1>JJ&C Stainless Steel Fabrication Services</h1>
-                    <p>Gonzaga Ext., Barangay Taculing, Bacolod City, Philippines</p>
-                </div>
-            </td>
-        </tr>
-    </table>
-</div>
+    $ruleName = '';
+    if (!empty($rule_id)) {
+        $stmt = $conn->prepare("SELECT rule_name FROM transaction_rules WHERE id = ?");
+        $stmt->bind_param("i", $rule_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $ruleName = $row['rule_name'];
+        }
+    }
+    ?>
 
-<!-- Statement Title -->
+    <!-- Header -->
+    <div class="header">
+        <table>
+            <tr>
+                <td style="width: 90px;">
+                    <?php if ($logoData): ?>
+                        <img src="data:image/jpeg;base64,<?= $logoData ?>" alt="Logo">
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <div class="company-info">
+                        <h1>JJ&C Stainless Steel Fabrication Services</h1>
+                        <p>Gonzaga Ext., Barangay Taculing, Bacolod City, Philippines</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <!-- Statement Title -->
     <div class="statement-title">
-        <h2>JOURNAL ENTRIES</h2>
+        <h2>
+            <?php
+            if (!empty($ruleName)) {
+                echo strtoupper($ruleName) . ' - JOURNAL ENTRIES';
+            } else {
+                echo 'JOURNAL ENTRIES';
+            }
+            ?>
+        </h2>
         <p>
             For the Period of
             <?php
@@ -181,54 +202,55 @@ if (file_exists($logoPath)) {
         </p>
     </div>
 
-<?php if (empty($entries)): ?>
-    <p class="empty-notice">No Journal Entries Found</p>
-<?php else: ?>
-    <table class="statement">
-        <thead>
-            <tr>
-                <th style="width: 15%;">Date</th>
-                <th style="width: 40%;">Particulars</th>
-                <th style="width: 22.5%;" class="text-right">Debit</th>
-                <th style="width: 22.5%;" class="text-right">Credit</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($entries as $entry): ?>
-                <?php 
-                $accounts = $entry['accounts'];
-                $rowCount = count($accounts); 
-                ?>
-                
-                <?php for ($i = 0; $i < $rowCount; $i++): ?>
-                    <tr>
-                        <?php if ($i === 0): ?>
-                            <td rowspan="<?= $rowCount ?>">
-                                <?= htmlspecialchars($entry['journal_date']) ?>
-                            </td>
-                        <?php endif; ?>
-                        
-                        <td><?= htmlspecialchars($accounts[$i]['account_name']) ?></td>
-                        <td class="text-right"><?= number_format($accounts[$i]['debit'], 2) ?></td>
-                        <td class="text-right"><?= number_format($accounts[$i]['credit'], 2) ?></td>
-                    </tr>
-                <?php endfor; ?>
-                
-                <tr class="gray-bg">
-                    <td colspan="4">
-                        <strong><?= htmlspecialchars($entry['transaction_name'] ?? 'General Entry') ?></strong>
-                        <?php if (!empty($entry['reference_no'])): ?>
-                            - Ref# <span class="ref"><?= htmlspecialchars($entry['reference_no']) ?></span>
-                        <?php endif; ?>
-                        <?php if (!empty($entry['description'])): ?>
-                            <br><span class="desc">(<?= htmlspecialchars($entry['description']) ?>)</span>
-                        <?php endif; ?>
-                    </td>
+    <?php if (empty($entries)): ?>
+        <p class="empty-notice">No Journal Entries Found</p>
+    <?php else: ?>
+        <table class="statement">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Date</th>
+                    <th style="width: 40%;">Particulars</th>
+                    <th style="width: 22.5%;" class="text-right">Debit</th>
+                    <th style="width: 22.5%;" class="text-right">Credit</th>
                 </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php endif; ?>
+            </thead>
+            <tbody>
+                <?php foreach ($entries as $entry): ?>
+                    <?php
+                    $accounts = $entry['accounts'];
+                    $rowCount = count($accounts);
+                    ?>
+
+                    <?php for ($i = 0; $i < $rowCount; $i++): ?>
+                        <tr>
+                            <?php if ($i === 0): ?>
+                                <td rowspan="<?= $rowCount ?>">
+                                    <?= htmlspecialchars($entry['journal_date']) ?>
+                                </td>
+                            <?php endif; ?>
+
+                            <td><?= htmlspecialchars($accounts[$i]['account_name']) ?></td>
+                            <td class="text-right"><?= number_format($accounts[$i]['debit'], 2) ?></td>
+                            <td class="text-right"><?= number_format($accounts[$i]['credit'], 2) ?></td>
+                        </tr>
+                    <?php endfor; ?>
+
+                    <tr class="gray-bg">
+                        <td colspan="4">
+                            <strong><?= htmlspecialchars($entry['transaction_name'] ?? 'General Entry') ?></strong>
+                            <?php if (!empty($entry['reference_no'])): ?>
+                                - Ref# <span class="ref"><?= htmlspecialchars($entry['reference_no']) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($entry['description'])): ?>
+                                <br><span class="desc">(<?= htmlspecialchars($entry['description']) ?>)</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
 
 </body>
+
 </html>

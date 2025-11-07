@@ -11,18 +11,33 @@ include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
 require_once "../configs/dbc.php";
 require_once "../models/journalentries.class.php";
+require_once "../models/transactions.class.php";
 
+$transactionModel = new Transaction($conn, null, null, null, null, null, null, null);
 $entry = new JournalEntries($conn, null, null, null, null, null, null);
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $search = $_GET['search'] ?? '';
 $month = $_GET['month'] ?? '';
 $year = $_GET['year'] ?? '';
+$filterRuleName = $_GET['rule_id'] ?? '';
 
-$journalEntries = $entry->getPaginatedJournalEntries($page, $search, $month, $year);
-$total_pages = $entry->getTotalJournalPages($search, $month, $year);
+$all_rule_names = $transactionModel->getTransactionsGroupByRuleName();
+$journalEntries = $entry->getPaginatedJournalEntries($page, $search, $month, $year, $filterRuleName);
+$total_pages = $entry->getTotalJournalPages($search, $month, $year, $filterRuleName);
 
-$queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) . '&year=' . urlencode($year);
-?>
+// Get selected rule name for display
+$selectedRuleName = '';
+if (!empty($filterRuleName)) {
+    foreach ($all_rule_names as $rule) {
+        if ($rule['rule_id'] == $filterRuleName) {
+            $selectedRuleName = $rule['rule_name'];
+            break;
+        }
+    }
+}
+
+$queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) . '&year=' . urlencode($year)
+    . '&rule_id=' . urlencode($filterRuleName); ?>
 
 <main class="bg-gray-100 px-6 py-4">
     <div class="mb-4">
@@ -33,6 +48,32 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
     <!-- Filter Form -->
     <div class="bg-white p-4 mb-4 rounded shadow">
         <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div class="sm:w-48">
+                <label class="block text-sm text-gray-700 mb-1">Filter by Transaction Name</label>
+                <select
+                    name="rule_id"
+                    onchange="this.form.submit()"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
+
+                    <option value="">--All Transaction Names--</option>
+
+                    <?php
+                    $currentCategory = '';
+                    foreach ($all_rule_names as $name):
+                        if ($name['category'] !== $currentCategory):
+                            $currentCategory = $name['category'];
+                    ?>
+                            <option disabled class="text-black-700 bg-gray-200 text-center cursor-default">[--<?= htmlspecialchars($currentCategory) ?> Category--]</option>
+                        <?php endif; ?>
+
+                        <option value="<?= $name['rule_id'] ?>"
+                            <?= (isset($_GET['rule_id']) && $_GET['rule_id'] == $name['rule_id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($name['rule_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+
+                </select>
+            </div>
 
             <!-- Month -->
             <div class="sm:w-48">
@@ -82,7 +123,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                     Search
                 </button>
 
-                <?php if ($search || $month || $year): ?>
+                <?php if ($search || $month || $year || $filterRuleName): ?>
                     <a href="?"
                         class="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 transition duration-200 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
@@ -153,18 +194,18 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             </table>
         </div>
         <?php if ($role == 'Admin'): ?>
-        <div class="flex justify-end my-4">
-            <button
-                command="show-modal"
-                commandfor="download-dialog"
-                class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-green-200 size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                <span>Download PDF</span>
-            </button>
-        </div>
-    <?php endif; ?>
+            <div class="flex justify-end my-4">
+                <button
+                    command="show-modal"
+                    commandfor="download-dialog"
+                    class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-md shadow-sm transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-green-200 size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <!-- Pagination -->
@@ -228,6 +269,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                 <span class="font-semibold">
                                     <?php
                                     $label = "All Months & Years";
+                                    
                                     if (!empty($month) && !empty($year)) {
                                         $label = date("F", mktime(0, 0, 0, $month, 1)) . " " . $year;
                                     } elseif (!empty($month)) {
@@ -235,9 +277,15 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                     } elseif (!empty($year)) {
                                         $label = "All Months " . $year;
                                     }
+                                    
+                                    // Add rule name if selected
+                                    if (!empty($selectedRuleName)) {
+                                        $label .= " - " . htmlspecialchars($selectedRuleName);
+                                    }
+                                    
                                     echo $label;
                                     ?>
-                                </span>
+                                </span>?
                             </p>
                         </div>
                     </div>
@@ -248,6 +296,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                     <input type="hidden" name="action" value="download_pdf">
                     <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
                     <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">
+                    <input type="hidden" name="rule_id" value="<?= htmlspecialchars($filterRuleName) ?>">
 
                     <!-- Buttons -->
                     <div class="flex flex-col sm:flex-row sm:flex-row-reverse sm:space-x-3 sm:space-x-reverse mt-4">

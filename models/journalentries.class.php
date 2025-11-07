@@ -10,7 +10,7 @@ class JournalEntries
     private $amount;
     private $description;
     private $date;
-    public $limit = 10;
+    public $limit = 5;
 
     public function __construct($conn, $transaction_id, $account_id, $entry_type, $amount, $description, $date)
     {
@@ -22,7 +22,7 @@ class JournalEntries
         $this->date = $date;
         $this->description = $description;
     }
-    public function getTotalJournalEntries($search = '', $month = '', $year = '')
+    public function getTotalJournalEntries($search = '', $month = '', $year = '', $rule_id = '')
     {
         $conditions = [];
 
@@ -39,11 +39,16 @@ class JournalEntries
             $conditions[] = "YEAR(je.date) = '" . intval($year) . "'";
         }
 
+        if ($rule_id !== '') {
+            $conditions[] = "t.rule_id = '" . intval($rule_id) . "'";
+        }
+
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
         $sql = "
         SELECT COUNT(DISTINCT je.transaction_id) AS total
         FROM journal_entries AS je
+        LEFT JOIN transactions AS t ON je.transaction_id = t.id
         JOIN chart_of_accounts AS coa ON je.account_id = coa.id
         $filterQuery
     ";
@@ -54,7 +59,7 @@ class JournalEntries
         return (int)$row['total'];
     }
 
-    public function getPaginatedJournalEntries($page = 1, $search = '', $month = '', $year = '')
+    public function getPaginatedJournalEntries($page = 1, $search = '', $month = '', $year = '', $rule_id = '')
     {
         $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
@@ -63,9 +68,9 @@ class JournalEntries
         if ($search !== '') {
             $search = mysqli_real_escape_string($this->conn, $search);
             $conditions[] = "(je.description LIKE '%$search%' 
-                        OR coa.account_name LIKE '%$search%' 
-                        OR tr.rule_name LIKE '%$search%' 
-                        OR t.reference_no LIKE '%$search%')";
+                    OR coa.account_name LIKE '%$search%' 
+                    OR tr.rule_name LIKE '%$search%' 
+                    OR t.reference_no LIKE '%$search%')";
         }
 
         if ($month !== '') {
@@ -76,9 +81,12 @@ class JournalEntries
             $conditions[] = "YEAR(je.date) = '" . intval($year) . "'";
         }
 
+        if ($rule_id !== '') {
+            $conditions[] = "t.rule_id = '" . intval($rule_id) . "'";
+        }
+
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
-        // Get transaction IDs with pagination
         $sqlIds = "
         SELECT DISTINCT je.transaction_id
         FROM journal_entries AS je
@@ -97,7 +105,6 @@ class JournalEntries
 
         $ids = implode(',', array_column($transactionIds, 'transaction_id'));
 
-        // Get full details for those transactions
         $sql = "
         SELECT 
             je.transaction_id,
@@ -142,11 +149,11 @@ class JournalEntries
         return array_values($transactions);
     }
 
-    public function getTotalJournalPages($search = '', $month = '', $year = '')
+    public function getTotalJournalPages($search = '', $month = '', $year = '', $rule_id = '')
     {
-        return ceil($this->getTotalJournalEntries($search, $month, $year) / $this->limit);
+        return ceil($this->getTotalJournalEntries($search, $month, $year, $rule_id) / $this->limit);
     }
-    public function getAllJournalEntries($month = '', $year = '')
+    public function getAllJournalEntries($month = '', $year = '', $rule_id = '')
     {
         $conditions = [];
 
@@ -158,15 +165,20 @@ class JournalEntries
             $conditions[] = "YEAR(je.date) = '" . intval($year) . "'";
         }
 
+        if ($rule_id !== '') {
+            $conditions[] = "t.rule_id = '" . intval($rule_id) . "'";
+        }
+
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
-        // Get transaction IDs with filters
         $sqlIds = "
         SELECT DISTINCT je.transaction_id
         FROM journal_entries AS je
+        LEFT JOIN transactions AS t ON je.transaction_id = t.id
         $filterQuery
         ORDER BY je.date ASC
     ";
+
         $resultIds = mysqli_query($this->conn, $sqlIds);
         $transactionIds = mysqli_fetch_all($resultIds, MYSQLI_ASSOC);
 
@@ -174,7 +186,6 @@ class JournalEntries
 
         $ids = implode(',', array_column($transactionIds, 'transaction_id'));
 
-        // Get full details including transaction name and reference number
         $sql = "
         SELECT 
             je.transaction_id,
@@ -192,10 +203,10 @@ class JournalEntries
         WHERE je.transaction_id IN ($ids)
         ORDER BY je.date ASC, je.transaction_id ASC, je.id ASC
     ";
+
         $result = mysqli_query($this->conn, $sql);
         $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-        // Group by transaction
         $transactions = [];
         foreach ($rows as $row) {
             $tid = $row['transaction_id'];
