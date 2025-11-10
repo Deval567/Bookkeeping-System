@@ -1,4 +1,5 @@
 <?php
+session_start();
 $title = "Login to Your Account";
 include_once "templates/header.php";
 ?>

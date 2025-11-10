@@ -403,7 +403,7 @@ $queryParams = '&' . http_build_query([
 
                     <!-- Rule Lines Display -->
                     <div class="mt-4">
-                        <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
+                        
                         <div id="rule-lines-display">
 
                         </div>
@@ -501,7 +501,6 @@ $queryParams = '&' . http_build_query([
 
                         <!-- Rule Lines Display -->
                         <div class="mt-4">
-                            <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
                             <div id="rule-lines-display-<?= $transaction['id'] ?>"></div>
                         </div>
 
@@ -611,6 +610,7 @@ $queryParams = '&' . http_build_query([
                         const amount = line.amount ?? '';
 
                         const lineHTML = `
+                        <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
                     <div class="flex gap-4 mb-2 items-end pb-2 border-b border-gray-200">
                         <!-- Account Name -->
                         <div class="flex-1 min-w-[200px]">
@@ -625,7 +625,7 @@ $queryParams = '&' . http_build_query([
                             <label class="block text-sm text-gray-700 mb-1">Entry Type</label>
                             <input type="hidden" name="entry_types[]" value="${entryType}">
                             <input type="text" value="${entryType}" readonly disabled
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900 capitalize">
                         </div>
 
                         <!-- Amount -->

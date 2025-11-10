@@ -10,7 +10,6 @@ if (isset($_POST['rule_id'])) {
     $rule_id = intval($_POST['rule_id']);
     $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : null;
 
-    // Get rule lines
     $stmt = $conn->prepare("
         SELECT trl.account_id, coa.account_name, trl.entry_type
         FROM transaction_rule_lines AS trl
@@ -32,7 +31,6 @@ if (isset($_POST['rule_id'])) {
         $lines[] = $row;
     }
 
-    // If editing (transaction_id provided), get existing amounts
     if ($transaction_id && !empty($lines)) {
         $stmt = $conn->prepare("
             SELECT account_id, 
@@ -55,7 +53,6 @@ if (isset($_POST['rule_id'])) {
                 $amounts[$row['account_id']] = $row['amount'];
             }
 
-            // Merge amounts into lines
             foreach ($lines as &$line) {
                 $line['amount'] = $amounts[$line['account_id']] ?? '';
             }

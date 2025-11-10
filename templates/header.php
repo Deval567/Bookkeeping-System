@@ -9,7 +9,6 @@
 
     <title><?php echo $title ?? "Bookkeeping System"; ?></title>
     <?php
-    session_start();
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     $currentFile = basename($_SERVER['PHP_SELF']);
