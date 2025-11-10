@@ -295,7 +295,7 @@
                     <div class="activity-item">
                         <table>
                             <tr>
-                                <td class="activity-name"><?= htmlspecialchars($item['name']) ?></td>
+                                <td class="activity-name"><?= htmlspecialchars($item['account_name']) ?></td>
                                 <td class="activity-amount"><?= displayAmount($item['balance']) ?></td>
                             </tr>
                         </table>
@@ -326,7 +326,7 @@
                     <div class="activity-item">
                         <table>
                             <tr>
-                                <td class="activity-name"><?= htmlspecialchars($item['name']) ?></td>
+                                <td class="activity-name"><?= htmlspecialchars($item['account_name']) ?></td>
                                 <td class="activity-amount"><?= displayAmount($item['balance']) ?></td>
                             </tr>
                         </table>
@@ -357,7 +357,7 @@
                     <div class="activity-item">
                         <table>
                             <tr>
-                                <td class="activity-name"><?= htmlspecialchars($item['name']) ?></td>
+                                <td class="activity-name"><?= htmlspecialchars($item['account_name']) ?></td>
                                 <td class="activity-amount"><?= displayAmount($item['balance']) ?></td>
                             </tr>
                         </table>

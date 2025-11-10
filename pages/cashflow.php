@@ -120,7 +120,7 @@ function displayAmount($amt)
                             <div class="divide-y divide-gray-100">
                                 <?php foreach ($operating as $item): ?>
                                     <div class="flex justify-between py-3 px-4 hover:bg-gray-50 transition">
-                                        <span class="text-gray-700"><?= htmlspecialchars($item['name']) ?></span>
+                                        <span class="text-gray-700"><?= htmlspecialchars($item['account_name']) ?></span>
                                         <span class="font-semibold text-gray-900 tabular-nums"><?= displayAmount($item['balance']) ?></span>
                                     </div>
                                 <?php endforeach; ?>
@@ -152,7 +152,7 @@ function displayAmount($amt)
                             <div class="divide-y divide-gray-100">
                                 <?php foreach ($investing as $item): ?>
                                     <div class="flex justify-between py-3 px-4 hover:bg-gray-50 transition">
-                                        <span class="text-gray-700"><?= htmlspecialchars($item['name']) ?></span>
+                                        <span class="text-gray-700"><?= htmlspecialchars($item['account_name']) ?></span>
                                         <span class="font-semibold text-gray-900 tabular-nums"><?= displayAmount($item['balance']) ?></span>
                                     </div>
                                 <?php endforeach; ?>
@@ -184,7 +184,7 @@ function displayAmount($amt)
                             <div class="divide-y divide-gray-100">
                                 <?php foreach ($financing as $item): ?>
                                     <div class="flex justify-between py-3 px-4 hover:bg-gray-50 transition">
-                                        <span class="text-gray-700"><?= htmlspecialchars($item['name']) ?></span>
+                                        <span class="text-gray-700"><?= htmlspecialchars($item['account_name']) ?></span>
                                         <span class="font-semibold text-gray-900 tabular-nums"><?= displayAmount($item['balance']) ?></span>
                                     </div>
                                 <?php endforeach; ?>
