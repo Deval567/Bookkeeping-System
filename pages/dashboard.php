@@ -1,9 +1,9 @@
 <?php
 session_start();
 if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
-    $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
-    header("Location: ../index.php");
-    exit();
+  $_SESSION['login_errors'] = ["You dont have access to that page. Please log in first."];
+  header("Location: ../index.php");
+  exit();
 }
 $title = "Dashboard";
 include_once "../templates/header.php";
@@ -70,51 +70,49 @@ $netCashFlow = $cashFlowData['NetCash'];
 $endingCash = $cashFlowData['EndingCash'];
 $hasCashFlowData = !empty($cashFlowData['Operating']) || !empty($cashFlowData['Investing']) || !empty($cashFlowData['Financing']);
 
-// Get monthly data for charts (last 12 months) - ALWAYS UNFILTERED
+
 $monthlyRevenue = [];
 $monthlyExpenses = [];
-$monthlyNetIncome = [];
+
 $monthLabels = [];
 
-for ($i = 11; $i >= 0; $i--) {
-  $month = date('m', strtotime("-$i months"));
-  $year = date('Y', strtotime("-$i months"));
-  $monthLabels[] = date('M Y', strtotime("-$i months"));
+$currentYear = date('Y');
 
-  $monthData = $journal->getIncomeStatement($month, $year);
-  $revenue = 0;
-  $expenses = 0;
+for ($month = 1; $month <= 12; $month++) {
+    $monthLabels[] = date('M Y', strtotime("$currentYear-$month-01"));
 
-  foreach ($monthData as $entry) {
-    if (strtoupper($entry['account_type']) === 'REVENUE') {
-      $revenue += floatval($entry['balance']);
-    } elseif (strtoupper($entry['account_type']) === 'EXPENSE') {
-      $expenses += abs(floatval($entry['balance']));
+    $monthData = $journal->getIncomeStatement($month, $currentYear);
+    $revenue = 0;
+    $expenses = 0;
+
+    foreach ($monthData as $entry) {
+        if (strtoupper($entry['account_type']) === 'REVENUE') {
+            $revenue += floatval($entry['balance']);
+        } elseif (strtoupper($entry['account_type']) === 'EXPENSE') {
+            $expenses += abs(floatval($entry['balance']));
+        }
     }
-  }
 
-  $monthlyRevenue[] = $revenue;
-  $monthlyExpenses[] = $expenses;
-  $monthlyNetIncome[] = $revenue - $expenses;
+    $monthlyRevenue[] = $revenue;
+    $monthlyExpenses[] = $expenses;
+
 }
 
-// Get cash flow data for last 12 months - ALWAYS UNFILTERED
 $monthlyCashFlow = [];
 $cashFlowLabels = [];
 
-for ($i = 11; $i >= 0; $i--) {
-  $month = date('m', strtotime("-$i months"));
-  $year = date('Y', strtotime("-$i months"));
-  $cashFlowLabels[] = date('M Y', strtotime("-$i months"));
+for ($month = 1; $month <= 12; $month++) {
+    $cashFlowLabels[] = date('M Y', strtotime("$currentYear-$month-01"));
 
-  $cashData = $journal->getCashFlow($month, $year);
-  $monthlyCashFlow[] = $cashData['NetCash'];
+    $cashData = $journal->getCashFlow($month, $currentYear);
+    $monthlyCashFlow[] = $cashData['NetCash'] ?? 0; 
 }
 
 function formatCurrency($amount)
 {
-  return number_format(abs($amount), 2);
+    return number_format(abs($amount), 2);
 }
+
 ?>
 
 <main class="bg-gray-100 px-6 py-4">
@@ -184,32 +182,32 @@ function formatCurrency($amount)
     </div>
   <?php endif; ?>
 
-    <?php if (isset($_SESSION['dashboard_errors'])): ?>
-        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
-            <div class="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 shadow-lg">
-                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                    <svg class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <?php foreach ($_SESSION['dashboard_errors'] as $error): ?>
-                        <p class="text-sm font-medium text-red-800 ">
-                            <?php echo ($error); ?>
-                        </p>
-                    <?php endforeach; ?>
-                </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-red-600 hover:text-red-800">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
+  <?php if (isset($_SESSION['dashboard_errors'])): ?>
+    <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
+      <div class="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 shadow-lg">
+        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+          <svg class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
         </div>
-    <?php
-        unset($_SESSION['dashboard_errors']);
-    endif;
-    ?>
+        <div class="flex-1">
+          <?php foreach ($_SESSION['dashboard_errors'] as $error): ?>
+            <p class="text-sm font-medium text-red-800 ">
+              <?php echo ($error); ?>
+            </p>
+          <?php endforeach; ?>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" class="text-red-600 hover:text-red-800">
+          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  <?php
+    unset($_SESSION['dashboard_errors']);
+  endif;
+  ?>
 
   <!-- Top Row: 3 Summary Cards -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -296,20 +294,28 @@ function formatCurrency($amount)
           </div>
         <?php else: ?>
           <div class="space-y-4">
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-              <span class="text-gray-600 font-medium">Total Revenue</span>
-              <span class="text-xl font-bold text-green-600"><?= formatCurrency($totalRevenue) ?></span>
-            </div>
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-              <span class="text-gray-600 font-medium">Total Expenses</span>
-              <span class="text-xl font-bold text-red-600"><?= formatCurrency($totalExpenses) ?></span>
-            </div>
+            <?php
+            $sections = [
+              'Total Revenue' => ['value' => $totalRevenue, 'color' => 'text-green-600'],
+              'Total Expenses' => ['value' => $totalExpenses, 'color' => 'text-red-600']
+            ];
+            foreach ($sections as $label => $data):
+            ?>
+              <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <span class="text-gray-600 font-medium"><?= $label ?></span>
+                <span class="text-xl font-bold <?= $data['color'] ?>">
+                  <?= $data['value'] >= 0 ? '' : '(' ?><?= formatCurrency(abs($data['value'])) ?><?= $data['value'] >= 0 ? '' : ')' ?>
+                </span>
+              </div>
+            <?php endforeach; ?>
+
             <div class="flex justify-between items-center pt-2">
-              <span class="text-gray-700 font-bold">Net Income</span>
-              <span class="text-2xl font-bold <?= $netIncome >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                <?= $netIncome >= 0 ? '' : '(' ?><?= formatCurrency($netIncome) ?><?= $netIncome >= 0 ? '' : ')' ?>
+              <span class="text-gray-700 font-bold"><?= $netIncome >= 0 ? 'Net Income' : 'Net Loss' ?></span>
+              <span class="text-xl font-bold <?= $netIncome >= 0 ? 'text-green-600' : 'text-red-600' ?>">
+                <?= $netIncome >= 0 ? '' : '(' ?><?= formatCurrency(abs($netIncome)) ?><?= $netIncome >= 0 ? '' : ')' ?>
               </span>
             </div>
+
             <?php if ($totalRevenue > 0): ?>
               <div class="bg-gray-50 p-3 rounded-lg">
                 <div class="flex justify-between items-center">
@@ -322,12 +328,14 @@ function formatCurrency($amount)
             <?php endif; ?>
           </div>
         <?php endif; ?>
+
         <a href="incomestatement.php<?= ($filterMonth || $filterYear) ? '?month=' . $filterMonth . '&year=' . $filterYear : '' ?>"
-          class="mt-4 block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200">
+          class="mt-4 block text-center bg-blue-600 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition duration-200">
           View Details
         </a>
       </div>
     </div>
+
 
     <!-- Cash Flow Summary Card -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
@@ -355,38 +363,40 @@ function formatCurrency($amount)
           </div>
         <?php else: ?>
           <div class="space-y-4">
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-              <span class="text-gray-600 font-medium">Operating</span>
-              <span class="text-lg font-bold <?= $operatingCash >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                <?= $operatingCash >= 0 ? '' : '(' ?><?= formatCurrency($operatingCash) ?><?= $operatingCash >= 0 ? '' : ')' ?>
-              </span>
-            </div>
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-              <span class="text-gray-600 font-medium">Investing</span>
-              <span class="text-lg font-bold <?= $investingCash >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                <?= $investingCash >= 0 ? '' : '(' ?><?= formatCurrency($investingCash) ?><?= $investingCash >= 0 ? '' : ')' ?>
-              </span>
-            </div>
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-              <span class="text-gray-600 font-medium">Financing</span>
-              <span class="text-lg font-bold <?= $financingCash >= 0 ? 'text-green-600' : 'text-red-600' ?>">
-                <?= $financingCash >= 0 ? '' : '(' ?><?= formatCurrency($financingCash) ?><?= $financingCash >= 0 ? '' : ')' ?>
-              </span>
-            </div>
-            <div class="bg-green-50 p-3 rounded-lg">
+            <?php
+            $sections = [
+              'Operating' => $operatingCash,
+              'Investing' => $investingCash,
+              'Financing' => $financingCash
+            ];
+            foreach ($sections as $label => $amount):
+            ?>
+              <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <span class="text-gray-600 font-medium"><?= $label ?></span>
+                <span class="text-lg font-bold <?= $amount >= 0 ? 'text-green-600' : 'text-red-600' ?>">
+                  <?= $amount >= 0 ? '' : '(' ?><?= formatCurrency(abs($amount)) ?><?= $amount >= 0 ? '' : ')' ?>
+                </span>
+              </div>
+            <?php endforeach; ?>
+
+            <div class="bg-gray-50 p-3 rounded-lg">
               <div class="flex justify-between items-center">
                 <span class="text-sm font-bold text-gray-700">Ending Cash</span>
-                <span class="text-xl font-bold text-green-700"><?= formatCurrency($endingCash) ?></span>
+                <span class="text-xl font-bold <?= $endingCash >= 0 ? 'text-green-700' : 'text-red-600' ?>">
+                  <?= $endingCash >= 0 ? '' : '(' ?><?= formatCurrency(abs($endingCash)) ?><?= $endingCash >= 0 ? '' : ')' ?>
+                </span>
               </div>
             </div>
           </div>
         <?php endif; ?>
+
         <a href="cashflow.php<?= ($filterMonth || $filterYear) ? '?month=' . $filterMonth . '&year=' . $filterYear : '' ?>"
           class="mt-4 block text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition duration-200">
           View Details
         </a>
       </div>
     </div>
+
   </div>
 
   <!-- Bottom Row: 2 Charts (Always show last 12 months - unfiltered) -->
@@ -482,116 +492,97 @@ function formatCurrency($amount)
   </div>
 </main>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // Revenue vs Expenses Chart
-  const revenueExpensesCtx = document.getElementById('revenueExpensesChart').getContext('2d');
-  const revenueExpensesChart = new Chart(revenueExpensesCtx, {
-    type: 'line',
-    data: {
-      labels: <?= json_encode($monthLabels) ?>,
-      datasets: [{
-          label: 'Revenue',
-          data: <?= json_encode($monthlyRevenue) ?>,
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
-          tension: 0.4,
-          fill: true
-        },
-        {
-          label: 'Expenses',
-          data: <?= json_encode($monthlyExpenses) ?>,
-          borderColor: 'rgb(239, 68, 68)',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          tension: 0.4,
-          fill: true
-        },
-        {
-          label: 'Net Income',
-          data: <?= json_encode($monthlyNetIncome) ?>,
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          fill: true
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top'
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              let label = context.dataset.label || '';
-              if (label) label += ': ';
-              let value = context.parsed.y;
-              return label + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }
-          }
-        }
-      }
-    }
-  });
-
-  // Cash Flow Chart
-  const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
-  const cashFlowChart = new Chart(cashFlowCtx, {
-    type: 'bar',
-    data: {
-      labels: <?= json_encode($cashFlowLabels) ?>,
-      datasets: [{
-        label: 'Net Cash Flow',
-        data: <?= json_encode($monthlyCashFlow) ?>,
-        backgroundColor: <?= json_encode(array_map(function ($val) {
-                            return $val >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
-                          }, $monthlyCashFlow)) ?>,
-        borderColor: <?= json_encode(array_map(function ($val) {
-                        return $val >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)';
-                      }, $monthlyCashFlow)) ?>,
+const revenueExpensesCtx = document.getElementById('revenueExpensesChart').getContext('2d');
+const revenueExpensesChart = new Chart(revenueExpensesCtx, {
+  type: 'bar',
+  data: {
+    labels: <?= json_encode($monthLabels) ?>,
+    datasets: [
+      {
+        label: 'Revenue',
+        data: <?= json_encode($monthlyRevenue) ?>,
+        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+        borderColor: 'rgb(34, 197, 94)',
         borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              let value = context.parsed.y;
-              return 'Net Cash: ' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }
+      },
+      {
+        label: 'Expenses',
+        data: <?= json_encode($monthlyExpenses) ?>,
+        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 2
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if(label) label += ': ';
+            let value = context.parsed.y;
+            return label + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
           }
         }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
           }
         }
       }
     }
-  });
+  }
+});
+
+const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+const cashFlowChart = new Chart(cashFlowCtx, {
+  type: 'line',
+  data: {
+    labels: <?= json_encode($cashFlowLabels) ?>,
+    datasets: [{
+      label: 'Net Cash Flow',
+      data: <?= json_encode($monthlyCashFlow) ?>,
+      borderColor: 'rgb(59, 130, 246)',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let value = context.parsed.y;
+            return 'Net Cash: ' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          }
+        }
+      }
+    }
+  }
+});
 </script>
