@@ -608,12 +608,14 @@ $queryParams = '&' . http_build_query([
                         const accountName = line.account_name ?? '';
                         const entryType = line.entry_type ?? '';
                         const amount = line.amount ?? '';
+                        const rule_line_id = line.rule_line_id ?? '';
 
                         const lineHTML = `
                         <h3 class="text-md font-semibold text-gray-900 mb-2">Journal Entries</h3>
                     <div class="flex gap-4 mb-2 items-end pb-2 border-b border-gray-200">
                         <!-- Account Name -->
                         <div class="flex-1 min-w-[200px]">
+                        <input type="hidden" name="rule_line_ids[]" value="${rule_line_id}">
                             <label class="block text-sm text-gray-700 mb-1">Account Name</label>
                             <input type="text" value="${accountName}" disabled readonly
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-900">

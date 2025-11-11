@@ -198,4 +198,12 @@ class TransactionRuleLines
 
         return $result;
     }
+    public function getRuleLineById($rule_line_id) {
+        $sql = "SELECT * FROM transaction_rule_lines WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $rule_line_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }

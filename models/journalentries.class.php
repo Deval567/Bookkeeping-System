@@ -5,23 +5,26 @@ class JournalEntries
     private $conn;
     private $id;
     private $transaction_id;
-    private $account_id;
+    private $rule_line_id;
     private $entry_type;
     private $amount;
     private $description;
     private $date;
+    public $month;
+    public $year;
+    public $search;
     public $limit = 5;
 
-    public function __construct($conn, $transaction_id, $account_id, $entry_type, $amount, $description, $date)
+    public function __construct($conn, $transaction_id, $entry_type, $amount, $description, $date)
     {
         $this->conn = $conn;
         $this->transaction_id = $transaction_id;
-        $this->account_id = $account_id;
         $this->entry_type = $entry_type;
         $this->amount = $amount;
         $this->date = $date;
         $this->description = $description;
     }
+    
     public function getTotalJournalEntries($search = '', $month = '', $year = '', $rule_id = '')
     {
         $conditions = [];
@@ -49,7 +52,8 @@ class JournalEntries
         SELECT COUNT(DISTINCT je.transaction_id) AS total
         FROM journal_entries AS je
         LEFT JOIN transactions AS t ON je.transaction_id = t.id
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         $filterQuery
     ";
 
@@ -92,7 +96,8 @@ class JournalEntries
         FROM journal_entries AS je
         LEFT JOIN transactions AS t ON je.transaction_id = t.id
         LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         $filterQuery
         ORDER BY je.date DESC
         LIMIT {$this->limit} OFFSET {$offset}
@@ -118,7 +123,8 @@ class JournalEntries
         FROM journal_entries AS je
         LEFT JOIN transactions AS t ON je.transaction_id = t.id
         LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         WHERE je.transaction_id IN ($ids)
         ORDER BY je.date DESC, je.id ASC
     ";
@@ -153,6 +159,7 @@ class JournalEntries
     {
         return ceil($this->getTotalJournalEntries($search, $month, $year, $rule_id) / $this->limit);
     }
+    
     public function getAllJournalEntries($month = '', $year = '', $rule_id = '')
     {
         $conditions = [];
@@ -199,7 +206,8 @@ class JournalEntries
         FROM journal_entries AS je
         LEFT JOIN transactions AS t ON je.transaction_id = t.id
         LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         WHERE je.transaction_id IN ($ids)
         ORDER BY je.date ASC, je.transaction_id ASC, je.id ASC
     ";
@@ -230,18 +238,19 @@ class JournalEntries
         return array_values($transactions);
     }
 
-    public function createJournalEntry($transaction_id, $account_id, $entry_type, $amount, $description, $date)
+    public function createJournalEntry($transaction_id, $rule_line_id, $entry_type, $amount, $description, $date)
     {
         $debit = $entry_type === 'debit' ? $amount : 0;
         $credit = $entry_type === 'credit' ? $amount : 0;
 
-        $sql = "INSERT INTO journal_entries (transaction_id, account_id, debit, credit,description,date)
-            VALUES (?, ?, ?, ?,?,?)";
+        $sql = "INSERT INTO journal_entries (transaction_id, rule_line_id, debit, credit, description, date)
+            VALUES (?, ?, ?, ?, ?, ?)";
 
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "iiddss", $transaction_id, $account_id, $debit, $credit, $description, $date);
+        mysqli_stmt_bind_param($stmt, "iiddss", $transaction_id, $rule_line_id, $debit, $credit, $description, $date);
         return mysqli_stmt_execute($stmt);
     }
+    
     public function deleteJournalEntriesByTransactionId($transaction_id)
     {
         $sql = "DELETE FROM journal_entries WHERE transaction_id = ?";
@@ -249,22 +258,24 @@ class JournalEntries
         mysqli_stmt_bind_param($stmt, "i", $transaction_id);
         return mysqli_stmt_execute($stmt);
     }
-    public function updateJournalEntry($id, $account_id, $entry_type, $amount, $description, $date)
+    
+    public function updateJournalEntryByRuleLine($transaction_id, $rule_line_id, $entry_type, $amount, $description, $date)
     {
         $debit = $entry_type === 'debit' ? $amount : 0;
         $credit = $entry_type === 'credit' ? $amount : 0;
 
         $sql = "UPDATE journal_entries 
             SET debit = ?, credit = ?, description = ?, date = ?
-            WHERE transaction_id = ? AND account_id = ?";
+            WHERE transaction_id = ? AND rule_line_id = ?";
 
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ddssii", $debit, $credit, $description, $date, $id, $account_id);
+        mysqli_stmt_bind_param($stmt, "ddssii", $debit, $credit, $description, $date, $transaction_id, $rule_line_id);
         $result = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
         return $result;
     }
+    
     // General Ledger
 
     public function getTotalLedgerAccounts($search = '', $month = '', $year = '')
@@ -287,9 +298,10 @@ class JournalEntries
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
         $sql = "
-        SELECT COUNT(DISTINCT je.account_id) AS total
+        SELECT COUNT(DISTINCT trl.account_id) AS total
         FROM journal_entries AS je
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         $filterQuery
     ";
 
@@ -321,9 +333,10 @@ class JournalEntries
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
         $sqlIds = "
-        SELECT DISTINCT je.account_id
+        SELECT DISTINCT trl.account_id
         FROM journal_entries AS je
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         $filterQuery
         ORDER BY coa.account_type, coa.account_name
         LIMIT 5 OFFSET {$offset}
@@ -336,7 +349,7 @@ class JournalEntries
 
         $ids = implode(',', array_column($accountIds, 'account_id'));
 
-        $entryConditions = ["je.account_id IN ($ids)"];
+        $entryConditions = ["trl.account_id IN ($ids)"];
 
         if ($search !== '') {
             $entryConditions[] = "(coa.account_name LIKE '%$search%' OR coa.description LIKE '%$search%')";
@@ -365,7 +378,8 @@ class JournalEntries
             je.debit,
             je.credit
         FROM journal_entries AS je
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         JOIN transactions AS t ON je.transaction_id = t.id
         LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
         $entryFilter
@@ -415,6 +429,7 @@ class JournalEntries
     {
         return ceil($this->getTotalLedgerAccounts($search, $month, $year) / 5);
     }
+    
     public function getAllGeneralLedger($month = '', $year = '')
     {
         $conditions = [];
@@ -430,10 +445,11 @@ class JournalEntries
         $filterQuery = count($conditions) > 0 ? "WHERE " . implode(' AND ', $conditions) : "";
 
         $sqlIds = "
-        SELECT DISTINCT je.account_id
+        SELECT DISTINCT trl.account_id
         FROM journal_entries AS je
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
         $filterQuery
-        ORDER BY je.account_id ASC
+        ORDER BY trl.account_id ASC
     ";
         $resultIds = mysqli_query($this->conn, $sqlIds);
         $accountIds = mysqli_fetch_all($resultIds, MYSQLI_ASSOC);
@@ -455,10 +471,11 @@ class JournalEntries
             t.reference_no,
             tr.rule_name AS transaction_type
         FROM journal_entries AS je
-        JOIN chart_of_accounts AS coa ON je.account_id = coa.id
+        LEFT JOIN transaction_rule_lines AS trl ON je.rule_line_id = trl.id
+        JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         LEFT JOIN transactions AS t ON je.transaction_id = t.id
         LEFT JOIN transaction_rules AS tr ON t.rule_id = tr.id
-        WHERE je.account_id IN ($ids)
+        WHERE trl.account_id IN ($ids)
         " . ($filterQuery ? " AND " . implode(' AND ', $conditions) : "") . "
         ORDER BY coa.account_name ASC, je.date ASC, je.transaction_id ASC
     ";
@@ -501,7 +518,6 @@ class JournalEntries
 
     // Trial Balance
 
-
     public function getAllTrialBalance($month = '', $year = '')
     {
         $conditions = ["je.id IS NOT NULL"];
@@ -523,7 +539,8 @@ class JournalEntries
             SUM(COALESCE(je.debit, 0)) AS total_debit,
             SUM(COALESCE(je.credit, 0)) AS total_credit
         FROM chart_of_accounts AS coa
-        INNER JOIN journal_entries AS je ON je.account_id = coa.id
+        INNER JOIN transaction_rule_lines AS trl ON trl.account_id = coa.id
+        INNER JOIN journal_entries AS je ON je.rule_line_id = trl.id
         $filterQuery
         GROUP BY coa.id, coa.account_name, coa.account_type
         ORDER BY 
@@ -556,6 +573,7 @@ class JournalEntries
 
         return $trialBalance;
     }
+    
     // Balance Sheet
     public function getBalanceSheet($month = null, $year = null)
     {
@@ -564,7 +582,6 @@ class JournalEntries
         if ($year)  $where[] = "YEAR(je.date) = " . intval($year);
         $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-        // Get Asset, Liability, and Equity balances
         $sql = "
         SELECT 
             coa.id,
@@ -580,7 +597,8 @@ class JournalEntries
                 ELSE 0
             END AS balance
         FROM chart_of_accounts coa
-        INNER JOIN journal_entries je ON je.account_id = coa.id
+        INNER JOIN transaction_rule_lines trl ON trl.account_id = coa.id
+        INNER JOIN journal_entries je ON je.rule_line_id = trl.id
         $whereSql
         " . ($where ? "AND" : "WHERE") . " coa.account_type IN ('Asset','Liability','Equity')
         GROUP BY coa.id, coa.account_name, coa.account_type
@@ -600,13 +618,13 @@ class JournalEntries
             }
         }
 
-        // Calculate Net Income or Net Loss (Revenue - Expenses)
         $netIncomeSql = "
         SELECT 
             SUM(CASE WHEN coa.account_type = 'Revenue' THEN je.credit - je.debit ELSE 0 END) as total_revenue,
             SUM(CASE WHEN coa.account_type = 'Expense' THEN je.debit - je.credit ELSE 0 END) as total_expenses
         FROM journal_entries je
-        INNER JOIN chart_of_accounts coa ON je.account_id = coa.id
+        INNER JOIN transaction_rule_lines trl ON je.rule_line_id = trl.id
+        INNER JOIN chart_of_accounts coa ON trl.account_id = coa.id
         $whereSql
         " . ($where ? "AND" : "WHERE") . " coa.account_type IN ('Revenue', 'Expense')
     ";
@@ -618,7 +636,6 @@ class JournalEntries
         $totalExpenses = floatval($netIncomeRow['total_expenses'] ?? 0);
         $netIncome = $totalRevenue - $totalExpenses;
 
-        // Add net income/loss to the balances array as a special entry
         if (abs($netIncome) > 0.01) {
             $balances[] = [
                 'id' => 'net_income',
@@ -633,7 +650,7 @@ class JournalEntries
         return $balances;
     }
 
-    //Income Statemnet
+    //Income Statement
     public function getIncomeStatement($month = null, $year = null)
     {
         $where = [];
@@ -649,9 +666,10 @@ class JournalEntries
             coa.account_type, 
             SUM(j.credit - j.debit) AS balance
         FROM journal_entries j
-        JOIN chart_of_accounts coa ON j.account_id = coa.id
+        INNER JOIN transaction_rule_lines trl ON j.rule_line_id = trl.id
+        JOIN chart_of_accounts coa ON trl.account_id = coa.id
         $whereSql
-        AND coa.account_type IN ('Revenue','Expense')
+        " . ($where ? "AND" : "WHERE") . " coa.account_type IN ('Revenue','Expense')
         GROUP BY coa.id
         ORDER BY FIELD(coa.account_type, 'Revenue','Expense'), coa.account_name
     ";
@@ -667,6 +685,7 @@ class JournalEntries
 
         return $balances;
     }
+    
     // Cash Flow Statement 
     public function getCashFlow($month = null, $year = null)
     {
@@ -722,8 +741,9 @@ class JournalEntries
         SELECT 
             COALESCE(SUM(j.debit), 0) - COALESCE(SUM(j.credit), 0) as beginning_balance
         FROM journal_entries j
+        INNER JOIN transaction_rule_lines trl ON j.rule_line_id = trl.id
         JOIN transactions t ON j.transaction_id = t.id
-        WHERE j.account_id = $cashAccountId
+        WHERE trl.account_id = $cashAccountId
     ";
             if ($month && strtolower($month) !== 'all' && $year && strtolower($year) !== 'all') {
                 $beginningCashSql .= " AND t.transaction_date < '" . $year . "-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01'";
@@ -740,8 +760,9 @@ class JournalEntries
         $cashTransactionsSql = "
     SELECT DISTINCT j.transaction_id 
     FROM journal_entries j
+    INNER JOIN transaction_rule_lines trl ON j.rule_line_id = trl.id
     JOIN transactions t ON j.transaction_id = t.id
-    WHERE j.account_id = $cashAccountId
+    WHERE trl.account_id = $cashAccountId
     $dateWhere
 ";
         $cashTransResult = $this->conn->query($cashTransactionsSql);
@@ -769,17 +790,18 @@ class JournalEntries
         t.transaction_date,
         t.description as transaction_description,
         j.description as entry_description,
-        j.account_id,
+        trl.account_id,
         j.debit,
         j.credit,
         coa.account_name,
         coa.account_type,
         coa.cash_flow_category
     FROM journal_entries j
+    INNER JOIN transaction_rule_lines trl ON j.rule_line_id = trl.id
     JOIN transactions t ON j.transaction_id = t.id
-    JOIN chart_of_accounts coa ON j.account_id = coa.id
+    JOIN chart_of_accounts coa ON trl.account_id = coa.id
     WHERE j.transaction_id IN ($idsList)
-    ORDER BY t.transaction_date, j.transaction_id, j.account_id
+    ORDER BY t.transaction_date, j.transaction_id, trl.account_id
 ";
         $result = $this->conn->query($sql);
         if (!$result) {
