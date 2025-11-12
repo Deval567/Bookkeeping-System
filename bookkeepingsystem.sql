@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Nov 03, 2025 at 11:42 AM
+-- Generation Time: Nov 12, 2025 at 09:08 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,12 +20,14 @@ SET time_zone = "+00:00";
 --
 -- Database: `bookkeepingsystem`
 --
+CREATE DATABASE `bookkeepingsystem`;
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `chart_of_accounts`
 --
+
 
 CREATE TABLE `chart_of_accounts` (
   `id` int(11) NOT NULL,
@@ -40,7 +42,6 @@ CREATE TABLE `chart_of_accounts` (
 --
 
 INSERT INTO `chart_of_accounts` (`id`, `account_name`, `account_type`, `cash_flow_category`, `description`) VALUES
-(1, 'Cash on Hand', 'Asset', 'Operating', 'Physical cash kept on company premises.'),
 (2, 'Cash in Bank', 'Asset', 'Operating', 'Company’s cash deposits in bank accounts.'),
 (3, 'Accounts Receivable', 'Asset', 'Operating', 'Amounts owed by customers.'),
 (4, 'Inventory', 'Asset', 'Operating', 'Goods held for sale.'),
@@ -100,7 +101,7 @@ INSERT INTO `chart_of_accounts` (`id`, `account_name`, `account_type`, `cash_flo
 CREATE TABLE `journal_entries` (
   `id` int(11) NOT NULL,
   `transaction_id` int(11) NOT NULL,
-  `account_id` int(11) NOT NULL,
+  `rule_line_id` int(11) DEFAULT NULL,
   `debit` decimal(15,2) DEFAULT 0.00,
   `credit` decimal(15,2) DEFAULT 0.00,
   `description` text NOT NULL,
@@ -111,27 +112,27 @@ CREATE TABLE `journal_entries` (
 -- Dumping data for table `journal_entries`
 --
 
-INSERT INTO `journal_entries` (`id`, `transaction_id`, `account_id`, `debit`, `credit`, `description`, `date`) VALUES
-(58, 31, 62, 50000.00, 0.00, 'Initial capital investment', '2025-01-01'),
-(59, 31, 22, 0.00, 50000.00, 'Initial capital investment', '2025-01-01'),
-(60, 32, 62, 0.00, 15000.00, 'Purchased office equipment', '2025-01-02'),
-(61, 32, 10, 15000.00, 0.00, 'Purchased office equipment', '2025-01-02'),
-(62, 33, 4, 8000.00, 0.00, 'Purchased inventory from supplier', '2025-01-05'),
-(63, 33, 63, 0.00, 8000.00, 'Purchased inventory from supplier', '2025-01-05'),
-(64, 34, 3, 12000.00, 0.00, 'Sold goods on credit', '2025-01-10'),
-(65, 34, 27, 0.00, 12000.00, 'Sold goods on credit', '2025-01-10'),
-(66, 35, 32, 5000.00, 0.00, 'Cost of inventory sold\r\n\r\n', '2025-01-10'),
-(67, 35, 4, 0.00, 5000.00, 'Cost of inventory sold\r\n\r\n', '2025-01-10'),
-(68, 36, 62, 12000.00, 0.00, 'Collected payment from customer', '2025-01-15'),
-(69, 36, 3, 0.00, 12000.00, 'Collected payment from customer', '2025-01-15'),
-(70, 37, 34, 2000.00, 0.00, 'Paid monthly rent', '2025-01-20'),
-(71, 37, 62, 0.00, 2000.00, 'Paid monthly rent', '2025-01-20'),
-(72, 38, 33, 3500.00, 0.00, 'Paid employee salaries', '2025-01-25'),
-(73, 38, 62, 0.00, 3500.00, 'Paid employee salaries', '2025-01-25'),
-(74, 39, 35, 500.00, 0.00, 'Paid utility bills', '2025-01-25'),
-(75, 39, 62, 0.00, 500.00, 'Paid utility bills', '2025-01-25'),
-(76, 40, 63, 8000.00, 0.00, 'Paid supplier for inventory', '2025-01-30'),
-(77, 40, 62, 0.00, 8000.00, 'Paid supplier for inventory', '2025-01-30');
+INSERT INTO `journal_entries` (`id`, `transaction_id`, `rule_line_id`, `debit`, `credit`, `description`, `date`) VALUES
+(94, 40, 61, 8000.00, 0.00, 'Paid supplier for inventory', '2025-01-30'),
+(95, 40, 62, 0.00, 8000.00, 'Paid supplier for inventory', '2025-01-30'),
+(96, 38, 57, 3500.00, 0.00, 'Paid employee salaries', '2025-01-25'),
+(97, 38, 58, 0.00, 3500.00, 'Paid employee salaries', '2025-01-25'),
+(98, 39, 59, 500.00, 0.00, 'Paid utility bills', '2025-01-25'),
+(99, 39, 60, 0.00, 500.00, 'Paid utility bills', '2025-01-25'),
+(100, 37, 55, 2000.00, 0.00, 'Paid monthly rent', '2025-01-20'),
+(101, 37, 56, 0.00, 2000.00, 'Paid monthly rent', '2025-01-20'),
+(102, 36, 53, 12000.00, 0.00, 'Collected payment from customer', '2025-01-15'),
+(103, 36, 54, 0.00, 12000.00, 'Collected payment from customer', '2025-01-15'),
+(104, 34, 49, 12000.00, 0.00, 'Sold goods on credit', '2025-01-10'),
+(105, 34, 50, 0.00, 12000.00, 'Sold goods on credit', '2025-01-10'),
+(106, 35, 51, 5000.00, 0.00, 'Cost of inventory sold\r\n\r\n', '2025-01-10'),
+(107, 35, 52, 0.00, 5000.00, 'Cost of inventory sold\r\n\r\n', '2025-01-10'),
+(108, 33, 47, 8000.00, 0.00, 'Purchased inventory from supplier', '2025-01-05'),
+(109, 33, 48, 0.00, 8000.00, 'Purchased inventory from supplier', '2025-01-05'),
+(110, 32, 45, 0.00, 15000.00, 'Purchased office equipment', '2025-01-02'),
+(111, 32, 46, 15000.00, 0.00, 'Purchased office equipment', '2025-01-02'),
+(112, 31, 43, 50000.00, 0.00, 'Initial capital investment', '2025-01-01'),
+(113, 31, 44, 0.00, 50000.00, 'Initial capital investment', '2025-01-01');
 
 -- --------------------------------------------------------
 
@@ -297,8 +298,8 @@ ALTER TABLE `chart_of_accounts`
 --
 ALTER TABLE `journal_entries`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `account_id` (`account_id`),
-  ADD KEY `journal_entries_ibfk_1` (`transaction_id`);
+  ADD KEY `journal_entries_ibfk_1` (`transaction_id`),
+  ADD KEY `fk_journal_rule_line` (`rule_line_id`);
 
 --
 -- Indexes for table `transactions`
@@ -343,13 +344,13 @@ ALTER TABLE `chart_of_accounts`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `transaction_rules`
@@ -361,7 +362,7 @@ ALTER TABLE `transaction_rules`
 -- AUTO_INCREMENT for table `transaction_rule_lines`
 --
 ALTER TABLE `transaction_rule_lines`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -377,6 +378,9 @@ ALTER TABLE `users`
 -- Constraints for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
+  ADD CONSTRAINT `fk_journal_rule_line` FOREIGN KEY (`rule_line_id`) REFERENCES `transaction_rule_lines` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_journal_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rule_line_id` FOREIGN KEY (`rule_line_id`) REFERENCES `transaction_rule_lines` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `journal_entries_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 --
@@ -384,14 +388,16 @@ ALTER TABLE `journal_entries`
 --
 ALTER TABLE `transactions`
   ADD CONSTRAINT `fk_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_transactions_rule` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transactions_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `transaction_rules_1` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `transaction_rule_lines`
 --
 ALTER TABLE `transaction_rule_lines`
-  ADD CONSTRAINT `fk_account` FOREIGN KEY (`account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_rule` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_rule_lines_account` FOREIGN KEY (`account_id`) REFERENCES `chart_of_accounts` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_rule_lines_rule` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
