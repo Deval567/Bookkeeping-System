@@ -141,15 +141,20 @@ class transactionRules
 
         return $result;
     }
-    public function getRuleNamebyId($id)
+    public function getRuleNameById($id)
     {
-        $id = mysqli_real_escape_string($this->conn, $this->id);
+        $sql = "SELECT rule_name FROM transaction_rules WHERE id = ? LIMIT 1";
+        $stmt = mysqli_stmt_init($this->conn);
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return null;
+        }
 
-        $sql = "SELECT rule_name FROM transaction_rules WHERE id = '$id'";
-
-        $result = mysqli_query($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
 
-        return $row ? $row['rule_name'] : null;
+        return $row['rule_name'] ?? null;
     }
 }
