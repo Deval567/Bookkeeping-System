@@ -36,6 +36,29 @@ class TransactionRuleLinesValidation
             }
         }
 
+        $has_debit = false;
+        $has_credit = false;
+        
+        foreach ($entry_types as $entry_type) {
+            if (strtolower($entry_type) === 'debit') {
+                $has_debit = true;
+            }
+            if (strtolower($entry_type) === 'credit') {
+                $has_credit = true;
+            }
+        }
+        
+        if (!$has_debit || !$has_credit) {
+            $errors['entry_types_incomplete'] = "Transaction must have at least one debit and one credit entry";
+        }
+
+        $account_ids_cleaned = array_filter($account_ids, fn($a) => !empty($a));
+        $unique_accounts = array_unique($account_ids_cleaned);
+        
+        if (count($account_ids_cleaned) !== count($unique_accounts)) {
+            $errors['duplicate_accounts'] = "Duplicate accounts are not allowed. Each account can only appear once in the transaction rule";
+        }
+
         return $errors;
     }
 }

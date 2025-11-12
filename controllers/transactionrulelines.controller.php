@@ -16,7 +16,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SE
 }
 if ($_SESSION['role'] !== 'Admin') {
     $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
-    header("Location: ../pages/dashboard.php"); 
+    header("Location: ../pages/dashboard.php");
     exit();
 }
 
@@ -32,7 +32,7 @@ require_once '../models/transactionrules.class.php';
 require_once '../models/chartofacc.class.php';
 
 $validation = new transactionRuleLinesValidation($rule_id, $accounts, $entries);
-$chartofAcc = new ChartofAccounts($conn, null, null, null, null,null);
+$chartofAcc = new ChartofAccounts($conn, null, null, null, null, null);
 $transactionRules = new transactionRules($conn, null, null, null, null);
 $transactionRuleLines = new TransactionRuleLines($conn, null, null, null, null);
 $errors = $validation->validate($rule_id, $accounts, $entries);
@@ -76,16 +76,20 @@ switch ($action) {
         header("Location: ../pages/transactionrulelines.php");
         exit;
         break;
+        
     case 'delete_rule_line':
         $id = $_POST['id'];
-        if ($transactionRuleLines->deleteTransactionRuleLine($id)) {
+        $result = $transactionRuleLines->deleteTransactionRuleLine($conn, $id);
+
+        if ($result['success']) {
             $_SESSION['success_message'] = "Transaction Rule Line deleted successfully.";
         } else {
-            $_SESSION['transactionrulelines_errors'] = ["Failed to delete transaction rule line. Please try again."];
+            $_SESSION['transactionrulelines_errors'] = ["Cannot delete rule line - it is currently being used."];
         }
         header("Location: ../pages/transactionrulelines.php");
         exit;
         break;
+
     case 'update_rule_line':
         $errorMessages = [];
         $successMessages = [];
@@ -103,7 +107,7 @@ switch ($action) {
 
             if ($transactionRuleLines->isRuleLineExists($rule_id, $account_id, $entry_type, $id)) {
                 $errorMessages[] = "Rule name <b>$ruleName</b> with Account name <b>$accountName</b> and entry type <b>" . ucfirst($entry_type) . "</b> already exists.";
-                continue; 
+                continue;
             }
 
             $updated = $transactionRuleLines->updateTransactionRuleLine($id, $rule_id, $account_id, $entry_type);

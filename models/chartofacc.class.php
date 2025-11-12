@@ -173,20 +173,25 @@ class ChartofAccounts
         return $result;
     }
 
-    public function deleteAccount($id)
+    public function deleteAccount($conn, $id)
     {
         $sql = "DELETE FROM chart_of_accounts WHERE id = ?";
         $stmt = mysqli_stmt_init($this->conn);
 
         if (!mysqli_stmt_prepare($stmt, $sql)) {
-            return false;
+            return ['success' => false, 'error' => 'prepare_failed'];
         }
 
         mysqli_stmt_bind_param($stmt, "i", $id);
-        $result = mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
 
-        return $result;
+        try {
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return ['success' => true];
+        } catch (mysqli_sql_exception $e) {
+            mysqli_stmt_close($stmt);
+            return ['success' => false, 'error' => 'account_in_use'];
+        }
     }
     public function getAccountNamebyId($id)
     {

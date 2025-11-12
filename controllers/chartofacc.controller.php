@@ -14,7 +14,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SE
 }
 if ($_SESSION['role'] !== 'Admin') {
     $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
-    header("Location: ../pages/dashboard.php"); 
+    header("Location: ../pages/dashboard.php");
     exit();
 }
 
@@ -90,13 +90,18 @@ switch ($action) {
         break;
 
     case "delete_account":
-        $deleted = $chartofacc->deleteAccount($id);
-        if ($deleted) {
+        $result = $chartofacc->deleteAccount($conn, $id);
+
+        if ($result['success']) {
             $_SESSION['success_message'] = "Account deleted successfully.";
             header("Location: ../pages/chartofaccounts.php");
             exit;
         } else {
-            $_SESSION['chartofacc_errors'] = ["Failed to delete account. Please try again."];
+            if ($result['error'] === 'account_in_use') {
+                $_SESSION['chartofacc_errors'] = ["Cannot delete account - it is currently used in transaction rules."];
+            } else {
+                $_SESSION['chartofacc_errors'] = ["Failed to delete account. Please try again."];
+            }
             header("Location: ../pages/chartofaccounts.php");
             exit;
         }

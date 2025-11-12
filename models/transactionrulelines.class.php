@@ -166,21 +166,28 @@ class TransactionRuleLines
 
         return $result;
     }
-    public function deleteTransactionRuleLine($id)
-    {
-        $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
-        $stmt = mysqli_stmt_init($this->conn);
+    public function deleteTransactionRuleLine($conn, $id)
+{
+    $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
+    $stmt = mysqli_stmt_init($this->conn);
 
-        if (!mysqli_stmt_prepare($stmt, $sql)) {
-            return false;
-        }
-
-        mysqli_stmt_bind_param($stmt, "i", $id);
-        $result = mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-
-        return $result;
+    if (!mysqli_stmt_prepare($stmt, $sql)) {
+        return ['success' => false, 'error' => 'prepare_failed'];
     }
+
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    
+    try {
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return ['success' => true];
+        
+    } catch (mysqli_sql_exception $e) {
+        mysqli_stmt_close($stmt);
+        // Any error = rule line is in use
+        return ['success' => false, 'error' => 'rule_line_in_use'];
+    }
+}
     public function updateTransactionRuleLine($id, $rule_id, $account_id, $entry_type)
     {
         $sql = "UPDATE transaction_rule_lines 
@@ -198,10 +205,10 @@ class TransactionRuleLines
 
         return $result;
     }
-    public function getRuleLineById($rule_line_id) {
+    public function getRuleLineById($id) {
         $sql = "SELECT * FROM transaction_rule_lines WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $rule_line_id);
+        $stmt->bind_param("i", $this->id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
