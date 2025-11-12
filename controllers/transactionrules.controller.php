@@ -14,7 +14,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SE
 }
 if ($_SESSION['role'] !== 'Admin') {
     $_SESSION['dashboard_errors'] = ["Access denied. You dont have access to this page."];
-    header("Location: ../pages/dashboard.php"); 
+    header("Location: ../pages/dashboard.php");
     exit();
 }
 require_once "../validations/transactionrules.validation.php";
@@ -22,7 +22,7 @@ require_once "../configs/dbc.php";
 require_once "../models/transactionrules.class.php";
 
 
-$id = $_POST['id']; 
+$id = $_POST['id'];
 $rule_name = $_POST['rule_name'];
 $category = $_POST['category'];
 $description = $_POST['description'];
@@ -30,7 +30,7 @@ $action = $_POST['action'];
 $errors = [];
 
 $validator = new transactionRulesValidation();
-$transaction= new transactionRules($conn, $id, $rule_name, $category,  $description);
+$transaction = new transactionRules($conn, $id, $rule_name, $category,  $description);
 $errors = $validator->validate($rule_name, $category,  $description);
 
 
@@ -54,34 +54,49 @@ switch ($action) {
             }
         }
         break;
-        case "delete_rule":
-            $deleted = $transaction->deleteTransactionRule($id);
-            if ($deleted) {
-                $_SESSION['success_message'] = "Transaction Rule deleted successfully.";
+    case "delete_rule":
+        $rule_id = $_POST['id'] ?? null;
+        $page = $_POST['page'] ?? 'transactionrules';
+
+        if (empty($rule_id)) {
+            $_SESSION['transactionrules_errors'] = ["No transaction rule selected for deletion."];
+            header("Location: ../pages/transactionrules.php?page=$page");
+            exit;
+        }
+
+        $ruleName = $transactionRules->getRuleNameById($rule_id) ?? 'Unknown Rule';
+        $deleted = $transactionRules->deleteTransactionRule($rule_id);
+
+        if ($deleted['success']) {
+            $_SESSION['success_message'] = "Transaction Rule <b>$ruleName</b> deleted successfully.";
+        } else {
+            $error = $deleted['error'] ?? 'unknown_error';
+            if ($error === 'rule_in_use') {
+                $_SESSION['transactionrules_errors'] = ["Cannot delete <b>$ruleName</b> — it is currently in use."];
             } else {
-                $_SESSION['transactionrules_errors'] = ["Failed to delete transaction rule. Please try again."];
+                $_SESSION['transactionrules_errors'] = ["Failed to delete <b>$ruleName</b>. Please try again."];
             }
+        }
+
+        header("Location: ../pages/transactionrules.php?page=$page");
+        exit;
+        break;
+    case "update_rule":
+        if (!empty($errors)) {
+            $_SESSION['transactionrules_errors'] = $errors;
             header("Location: ../pages/transactionrules.php");
             exit;
-            break;
-        case "update_rule":
-            if (!empty($errors)) {
-                $_SESSION['transactionrules_errors'] = $errors;
+        } else {
+            $updated = $transaction->updateTransactionRule($id, $rule_name, $category, $description);
+            if ($updated) {
+                $_SESSION['success_message'] = "Transaction rule updated successfully.";
                 header("Location: ../pages/transactionrules.php");
                 exit;
             } else {
-                $updated = $transaction->updateTransactionRule($id, $rule_name, $category, $description);
-                if ($updated) {
-                    $_SESSION['success_message'] = "Transaction rule updated successfully.";
-                    header("Location: ../pages/transactionrules.php");
-                    exit;
-                } else {
-                    $_SESSION['transactionrules_errors'] = ["Failed to update transaction rule. Please try again."];
-                    header("Location: ../pages/transactionrules.php");
-                    exit;
-                }
+                $_SESSION['transactionrules_errors'] = ["Failed to update transaction rule. Please try again."];
+                header("Location: ../pages/transactionrules.php");
+                exit;
             }
-            break;
-
+        }
+        break;
 }
-

@@ -89,36 +89,42 @@ class transactionRules
         $totalRules = $this->getTotalRules($search, $categoryFilter);
         return ceil($totalRules / $this->limit);
     }
-  public function createTransactionRule($rule_name, $category,$description)
-{
-    $sql = "INSERT INTO transaction_rules (rule_name, category,  description) VALUES (?, ?, ?)";
-    $stmt = mysqli_stmt_init($this->conn);
-
-    if (!mysqli_stmt_prepare($stmt, $sql)) {
-        return false;
-    }
-
-    mysqli_stmt_bind_param($stmt, "sss", $rule_name, $category, $description);
-    $result = mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-
-    return $result;
-}
-    public function deleteTransactionRule($id)
+    public function createTransactionRule($rule_name, $category, $description)
     {
-        $sql = "DELETE FROM transaction_rules WHERE id = ?";
+        $sql = "INSERT INTO transaction_rules (rule_name, category,  description) VALUES (?, ?, ?)";
         $stmt = mysqli_stmt_init($this->conn);
 
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             return false;
         }
 
-        mysqli_stmt_bind_param($stmt, "i", $id);
+        mysqli_stmt_bind_param($stmt, "sss", $rule_name, $category, $description);
         $result = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
         return $result;
     }
+    public function deleteTransactionRule($id)
+    {
+        $sql = "DELETE FROM transaction_rules WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return ['success' => false, 'error' => 'prepare_failed'];
+        }
+
+        mysqli_stmt_bind_param($stmt, "i", $id);
+
+        try {
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return ['success' => true];
+        } catch (mysqli_sql_exception $e) {
+            mysqli_stmt_close($stmt);
+            return ['success' => false, 'error' => 'rule_in_use'];
+        }
+    }
+
 
     public function updateTransactionRule($id, $rule_name, $category, $description)
     {
@@ -137,7 +143,7 @@ class transactionRules
     }
     public function getRuleNamebyId($id)
     {
-        $id = mysqli_real_escape_string($this->conn, $id);
+        $id = mysqli_real_escape_string($this->conn, $this->id);
 
         $sql = "SELECT rule_name FROM transaction_rules WHERE id = '$id'";
 
