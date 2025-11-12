@@ -50,7 +50,7 @@ $queryParams = '&' . http_build_query([
         <p class=" text-gray-600">Manage <?php echo $title ?> here.</p>
     </div>
 
-    <div class="flex justify-end mb-2">
+    <div class="flex justify-end mb-6">
         <button
             command="show-modal"
             commandfor="dialog"

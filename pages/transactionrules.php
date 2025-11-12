@@ -39,7 +39,7 @@ $total_pages = $transactionRules->getTotalPages($search, $categoryFilter);
         <p class=" text-gray-600">Manage Transaction Rules here.</p>
     </div>
 
-    <div class="flex justify-end mb-2">
+    <div class="flex justify-end mb-6">
         <button
             command="show-modal"
             commandfor="dialog"

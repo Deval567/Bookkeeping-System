@@ -30,7 +30,7 @@ class TransactionRuleLines
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalRuleLines($search = '', $entry_type = '', $rule_id = '')
+    public function getTotalRuleLines($search = '', $rule_id = '')
     {
         $search = trim($search);
         $filterQuery = '';
@@ -42,12 +42,7 @@ class TransactionRuleLines
                 $search = mysqli_real_escape_string($this->conn, $search);
                 $conditions[] = "(tr.rule_name LIKE '%$search%' 
                           OR coa.account_name LIKE '%$search%' 
-                          OR trl.entry_type LIKE '%$search%')";
-            }
-
-            if ($entry_type !== '') {
-                $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
-                $conditions[] = "trl.entry_type = '$entry_type'";
+                          )";
             }
 
             if ($rule_id !== '') {
@@ -71,7 +66,7 @@ class TransactionRuleLines
         return (int)$row['total'];
     }
 
-    public function getPaginatedRuleLines($page = 1, $search = '', $entry_type = '', $rule_id = '')
+    public function getPaginatedRuleLines($page = 1, $search = '', $rule_id = '')
     {
         $page = max(1, (int)$page);
         $offset = ($page - 1) * $this->limit;
@@ -83,12 +78,7 @@ class TransactionRuleLines
             $search = mysqli_real_escape_string($this->conn, $search);
             $conditions[] = "(tr.rule_name LIKE '%$search%' 
                   OR coa.account_name LIKE '%$search%' 
-                  OR trl.entry_type LIKE '%$search%')";
-        }
-
-        if ($entry_type !== '') {
-            $entry_type = mysqli_real_escape_string($this->conn, $entry_type);
-            $conditions[] = "LOWER(trl.entry_type) = LOWER('$entry_type')";
+                  )";
         }
 
         if ($rule_id !== '') {
@@ -117,9 +107,9 @@ class TransactionRuleLines
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function getTotalPages($search = '', $entry_type = '', $rule_id = '')
+    public function getTotalPages($search = '', $rule_id = '')
     {
-        return ceil($this->getTotalRuleLines($search, $entry_type, $rule_id) / $this->limit);
+        return ceil($this->getTotalRuleLines($search,  $rule_id) / $this->limit);
     }
 
     public function isRuleLineExists($rule_id, $account_id, $entry_type, $exclude_id = null)
@@ -167,27 +157,26 @@ class TransactionRuleLines
         return $result;
     }
     public function deleteTransactionRuleLine($conn, $id)
-{
-    $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
-    $stmt = mysqli_stmt_init($this->conn);
+    {
+        $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
 
-    if (!mysqli_stmt_prepare($stmt, $sql)) {
-        return ['success' => false, 'error' => 'prepare_failed'];
-    }
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return ['success' => false, 'error' => 'prepare_failed'];
+        }
 
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    
-    try {
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        return ['success' => true];
-        
-    } catch (mysqli_sql_exception $e) {
-        mysqli_stmt_close($stmt);
-        // Any error = rule line is in use
-        return ['success' => false, 'error' => 'rule_line_in_use'];
+        mysqli_stmt_bind_param($stmt, "i", $id);
+
+        try {
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return ['success' => true];
+        } catch (mysqli_sql_exception $e) {
+            mysqli_stmt_close($stmt);
+            // Any error = rule line is in use
+            return ['success' => false, 'error' => 'rule_line_in_use'];
+        }
     }
-}
     public function updateTransactionRuleLine($id, $rule_id, $account_id, $entry_type)
     {
         $sql = "UPDATE transaction_rule_lines 
@@ -205,12 +194,30 @@ class TransactionRuleLines
 
         return $result;
     }
-    public function getRuleLineById($id) {
+    public function getRuleLineById($id)
+    {
         $sql = "SELECT * FROM transaction_rule_lines WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $this->id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
+    }
+    public function getRuleLinesByRuleId($rule_id)
+    {
+        $sql = "SELECT * FROM transaction_rule_lines WHERE rule_id = ?";
+        $stmt = mysqli_stmt_init($this->conn);
+
+        if (!mysqli_stmt_prepare($stmt, $sql)) {
+            return [];
+        }
+
+        mysqli_stmt_bind_param($stmt, "i", $rule_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $lines = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        mysqli_stmt_close($stmt);
+
+        return $lines;
     }
 }

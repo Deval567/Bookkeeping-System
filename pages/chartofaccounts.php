@@ -35,7 +35,7 @@ $total_pages = $chartofacc->getTotalPages($search, $filter, $cash_flow_category)
         <p class=" text-gray-600">Manage Chart of Accounts here.</p>
     </div>
 
-    <div class="flex justify-end mb-2">
+    <div class="flex justify-end mb-6">
         <button
             command="show-modal"
             commandfor="dialog"
