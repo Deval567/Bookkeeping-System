@@ -41,7 +41,7 @@ class TransactionRuleLines
             if ($search !== '') {
                 $search = mysqli_real_escape_string($this->conn, $search);
                 $conditions[] = "(tr.rule_name LIKE '%$search%' 
-                          OR coa.account_name LIKE '%$search%' 
+                          
                           )";
             }
 
@@ -77,7 +77,7 @@ class TransactionRuleLines
         if ($search !== '') {
             $search = mysqli_real_escape_string($this->conn, $search);
             $conditions[] = "(tr.rule_name LIKE '%$search%' 
-                  OR coa.account_name LIKE '%$search%' 
+                  
                   )";
         }
 

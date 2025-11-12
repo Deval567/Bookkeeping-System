@@ -155,7 +155,7 @@ foreach (array_keys($grouped_lines) as $rule_id_key) {
                         type="text"
                         name="search"
                         value="<?= $_GET['search'] ?? '' ?>"
-                        placeholder="Search rule name, account name, or entry type ..."
+                        placeholder="Search for transaction name ..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
             </div>
