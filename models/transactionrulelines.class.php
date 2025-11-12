@@ -35,7 +35,7 @@ class TransactionRuleLines
         $search = trim($search);
         $filterQuery = '';
 
-        if ($search !== '' || $entry_type !== '' || $rule_id !== '') {
+        if ($search !== '' ||  $rule_id !== '') {
             $conditions = [];
 
             if ($search !== '') {
