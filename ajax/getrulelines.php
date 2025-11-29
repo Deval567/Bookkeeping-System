@@ -20,12 +20,12 @@ if (isset($_POST['rule_id'])) {
         JOIN chart_of_accounts AS coa ON trl.account_id = coa.id
         WHERE trl.rule_id = ?
     ");
-    
+
     if (!$stmt) {
         echo json_encode(['error' => 'Database prepare error']);
         exit;
     }
-    
+
     $stmt->bind_param('i', $rule_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -49,7 +49,7 @@ if (isset($_POST['rule_id'])) {
             FROM journal_entries
             WHERE transaction_id = ?
         ");
-        
+
         if ($stmt) {
             $stmt->bind_param('i', $transaction_id);
             $stmt->execute();
@@ -74,4 +74,3 @@ if (isset($_POST['rule_id'])) {
 }
 
 exit;
-?>

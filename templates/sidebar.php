@@ -42,11 +42,11 @@
       </li>
       <hr class="border-gray-200 mt-4">
 
-      <!-- Accounting Setup (Admin Only) -->
+      <!-- Bookkeeping Setup (Admin Only) -->
       <?php if ($role == 'Admin'): ?>
         <li>
           <div class="px-3 py-2 font-semibold text-gray-800 flex items-center gap-3 rounded-lg cursor-pointer transition-all">
-            Accounting Setup
+            Bookkeeping Setup
           </div>
 
           <ul class="ml-8 mt-2 space-y-1 text-sm">
