@@ -16,6 +16,7 @@ class TransactionRuleLines
         $this->account_id = $account_id;
         $this->entry_type = $entry_type;
     }
+    
     public function getRuleIdRulelinesGroupedByCategory()
     {
         $sql = "
@@ -141,7 +142,6 @@ class TransactionRuleLines
 
     public function createTransactionRuleLine($rule_id, $account_id, $entry_type)
     {
-
         $sql = "INSERT INTO transaction_rule_lines (rule_id, account_id, entry_type) 
                 VALUES (?,?,?)";
 
@@ -156,6 +156,7 @@ class TransactionRuleLines
 
         return $result;
     }
+    
     public function deleteTransactionRuleLine($conn, $id)
     {
         $sql = "DELETE FROM transaction_rule_lines WHERE id = ?";
@@ -177,6 +178,7 @@ class TransactionRuleLines
             return ['success' => false, 'error' => 'rule_line_in_use'];
         }
     }
+    
     public function updateTransactionRuleLine($id, $rule_id, $account_id, $entry_type)
     {
         $sql = "UPDATE transaction_rule_lines 
@@ -194,15 +196,17 @@ class TransactionRuleLines
 
         return $result;
     }
+    
     public function getRuleLineById($id)
     {
         $sql = "SELECT * FROM transaction_rule_lines WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $this->id);
+        $stmt->bind_param("i", $id);  // FIXED: Changed from $this->id to $id
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
+    
     public function getRuleLinesByRuleId($rule_id)
     {
         $sql = "SELECT * FROM transaction_rule_lines WHERE rule_id = ?";

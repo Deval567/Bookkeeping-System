@@ -151,41 +151,54 @@ switch ($action) {
         exit;
         break;
 
-    case 'delete_rule_lines':
-        $ids = $_POST['ids'] ?? [];
-        $rule_id = $_POST['rule_id'] ?? null;
-        $page = $_POST['page'] ?? 'transactionrulelines';
+   case 'delete_rule_lines':
+    $ids = $_POST['ids'] ?? [];
+    $rule_id = $_POST['rule_id'] ?? null;
+    $page = $_POST['page'] ?? 'transactionrulelines';
 
-        if (empty($ids)) {
-            $_SESSION['transactionrulelines_errors'] = ["No rule lines selected for deletion."];
-            header("Location: ../pages/transactionrulelines.php?page=$page");
-            exit;
-        }
+    if (empty($ids)) {
+        $_SESSION['transactionrulelines_errors'] = ["Please select at least one rule line to delete."];
+        header("Location: ../pages/transactionrulelines.php?page=$page");
+        exit;
+    }
 
-        // Get the rule name before deleting
-        $ruleName = $transactionRules->getRuleNameById($rule_id) ?? 'Unknown Rule';
+    $ruleName = $transactionRules->getRuleNameById($rule_id) ?? 'Unknown Rule';
 
-        $successCount = 0;
-        $errorMessages = [];
+    $successCount = 0;
+    $errorMessages = [];
 
-        foreach ($ids as $id) {
+    foreach ($ids as $id) {
+        $ruleLine = $transactionRuleLines->getRuleLineById($id);
+        
+        if ($ruleLine) {
+            $accountName = $chartofAcc->getAccountNameById($ruleLine['account_id']);
+            $entryType = ucfirst($ruleLine['entry_type']);
+            
             $result = $transactionRuleLines->deleteTransactionRuleLine($conn, $id);
+            
             if ($result['success']) {
                 $successCount++;
             } else {
-                $errorMessages[] = "Failed to delete a rule line for <b>$ruleName</b> — it may be in use.";
+                $errorMessages[] = "Cannot delete <b>$accountName</b> (<b>$entryType</b>) from <b>$ruleName</b> because it's being used in existing transactions.";
             }
+        } else {
+            $errorMessages[] = "Could not find the rule line you're trying to delete.";
         }
+    }
 
-        if ($successCount > 0) {
-            $_SESSION['success_message'] = "Successfully deleted <b>$successCount</b> rule line(s)</b> under <b>$ruleName</b>.";
+    if ($successCount > 0) {
+        if ($successCount === 1) {
+            $_SESSION['success_message'] = "Successfully deleted 1 rule line from <b>$ruleName</b>.";
+        } else {
+            $_SESSION['success_message'] = "Successfully deleted <b>$successCount</b> rule lines from <b>$ruleName</b>.";
         }
+    }
 
-        if (!empty($errorMessages)) {
-            $_SESSION['transactionrulelines_errors'] = $errorMessages;
-        }
+    if (!empty($errorMessages)) {
+        $_SESSION['transactionrulelines_errors'] = $errorMessages;
+    }
 
-        header("Location: ../pages/transactionrulelines.php?page=$page");
-        exit;
-        break;
+    header("Location: ../pages/transactionrulelines.php?page=$page");
+    exit;
+    break;
 }
