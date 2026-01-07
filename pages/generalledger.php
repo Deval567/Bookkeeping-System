@@ -27,7 +27,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
 <main class="bg-gray-100 px-6 py-4">
     <div class="mb-4">
         <h2 class="text-2xl font-semibold"><?= $title ?></h2>
-        <p class="text-gray-600">View account ledgers with running balances.</p>
+        <p class="text-gray-600">View each account ledgers.</p>
     </div>
 
     <!-- Filter Form -->
@@ -105,25 +105,13 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
             <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
                 <!-- Account Header -->
                 <div class="bg-white border-b-2 border-gray-300 px-6 py-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-800">
-                                <?= htmlspecialchars($ledger['account_name']) ?>
-                            </h3>
-                            <p class="text-gray-500 text-sm mt-1">
-                                <?= htmlspecialchars($ledger['account_type']) ?>
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <?php
-                            $finalBalance = end($ledger['entries'])['balance'];
-                            reset($ledger['entries']);
-                            ?>
-                            <p class="text-sm text-gray-500">Current Balance</p>
-                            <p class="text-2xl font-bold <?= $finalBalance < 0 ? 'text-red-600' : 'text-green-600' ?>">
-                                <?= number_format(abs($finalBalance), 2) ?>
-                            </p>
-                        </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">
+                            <?= htmlspecialchars($ledger['account_name']) ?>
+                        </h3>
+                        <p class="text-gray-500 text-sm mt-1">
+                            <?= htmlspecialchars($ledger['account_type']) ?>
+                        </p>
                     </div>
                 </div>
 
@@ -134,8 +122,7 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                             <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Date</th>
                             <th class="py-2 px-4 text-left text-sm font-medium border-r border-red-600">Particulars</th>
                             <th class="py-2 px-4 text-right text-sm font-medium border-r border-red-600">Debit</th>
-                            <th class="py-2 px-4 text-right text-sm font-medium border-r border-red-600">Credit</th>
-                            <th class="py-2 px-4 text-right text-sm font-medium">Balance</th>
+                            <th class="py-2 px-4 text-right text-sm font-medium">Credit</th>
                         </tr>
                     </thead>
                     <tbody class="group hover:scale-[1.02] hover:bg-gray-100 transition-all duration-200">
@@ -158,11 +145,8 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                 <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
                                     <?= $entry['debit'] > 0 ? number_format($entry['debit'], 2) : '0.00' ?>
                                 </td>
-                                <td class="py-2 px-4 text-gray-900 font-medium border-r border-gray-200 text-right">
-                                    <?= $entry['credit'] > 0 ? number_format($entry['credit'], 2) : '0.00' ?>
-                                </td>
                                 <td class="py-2 px-4 text-gray-900 font-medium text-right">
-                                    <?= number_format($entry['balance'], 2) ?>
+                                    <?= $entry['credit'] > 0 ? number_format($entry['credit'], 2) : '0.00' ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -177,14 +161,11 @@ $queryParams = '&search=' . urlencode($search) . '&month=' . urlencode($month) .
                                 echo number_format($totalDebit, 2);
                                 ?>
                             </td>
-                            <td class="py-2 px-4 text-gray-900 font-bold border-r border-gray-200 border-t border-gray-300 text-right">
+                            <td class="py-2 px-4 text-gray-900 font-bold border-t border-gray-300 text-right">
                                 <?php
                                 $totalCredit = array_sum(array_column($ledger['entries'], 'credit'));
                                 echo number_format($totalCredit, 2);
                                 ?>
-                            </td>
-                            <td class="py-2 px-4 text-gray-900 font-bold border-t border-gray-300 text-right">
-                                <?= number_format($finalBalance, 2) ?>
                             </td>
                         </tr>
                     </tbody>

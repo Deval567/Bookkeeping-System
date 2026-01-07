@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Trial Balance</title>
+    <title>Adjusted Trial Balance</title>
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -215,7 +215,7 @@
 
     <!-- Statement Title -->
     <div class="statement-title">
-        <h2>TRIAL BALANCE</h2>
+        <h2>ADJUSTED TRIAL BALANCE</h2>
         <p>
             As of
             <?php
@@ -233,7 +233,7 @@
     </div>
 
     <?php if (empty($trialBalance)): ?>
-        <p class="empty-notice">No Trial Balance Records Found</p>
+        <p class="empty-notice">No Adjusted Trial Balance Records Found</p>
     <?php else: ?>
         <table class="trial-balance">
             <thead>
@@ -283,7 +283,7 @@
                 ?>
                     <tr class="warning-row">
                         <td colspan="2">
-                            ⚠️ Trial Balance is OUT OF BALANCE
+                            ⚠️ Adjusted Trial Balance is OUT OF BALANCE
                         </td>
                         <td colspan="2" class="amount-cell">
                             Difference: <?= number_format($difference, 2) ?>

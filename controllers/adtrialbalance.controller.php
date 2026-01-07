@@ -39,7 +39,7 @@ $trialBalance = $journal->getAllTrialBalance($month, $year);
 switch ($action) {
     case "download_pdf":
         ob_start();
-        include('../templates/trialbalance.template.php');
+        include('../templates/adtrialbalance.template.php');
         $html = ob_get_clean();
 
         $dompdf = new Dompdf();
@@ -47,7 +47,7 @@ switch ($action) {
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $filename = 'Trial_Balance';
+        $filename = 'Adjusted Trial_Balance';
         if (!empty($month) && !empty($year)) {
             $dateObj = DateTime::createFromFormat('!m', $month);
             $monthName = $dateObj ? $dateObj->format('F') : $month;

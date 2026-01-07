@@ -80,16 +80,6 @@
             padding: 12px 15px;
         }
 
-        .account-header table {
-            width: 100%;
-            border: none;
-        }
-
-        .account-header td {
-            border: none;
-            padding: 0;
-        }
-
         .account-info h3 {
             margin: 0 0 3px 0;
             font-size: 14px;
@@ -101,29 +91,6 @@
             margin: 0;
             font-size: 10px;
             color: #6b7280;
-        }
-
-        .account-balance {
-            text-align: right;
-        }
-
-        .account-balance .label {
-            font-size: 10px;
-            color: #6b7280;
-            margin-bottom: 2px;
-        }
-
-        .account-balance .amount {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .balance-positive {
-            color: #15803d;
-        }
-
-        .balance-negative {
-            color: #dc2626;
         }
 
         table.ledger-table {
@@ -255,44 +222,25 @@
         <p class="empty-notice">No Ledger Entries Found</p>
     <?php else: ?>
         <?php foreach ($ledgers as $ledger): ?>
-            <?php
-            $finalBalance = end($ledger['entries'])['balance'] ?? 0;
-            reset($ledger['entries']);
-            ?>
 
             <!-- Account Section -->
             <div class="account-section">
                 <!-- Account Header -->
                 <div class="account-header">
-                    <table>
-                        <tr>
-                            <td style="width: 70%;">
-                                <div class="account-info">
-                                    <h3><?= htmlspecialchars($ledger['account_name']) ?></h3>
-                                    <p><?= htmlspecialchars($ledger['account_type']) ?></p>
-                                </div>
-                            </td>
-                            <td style="width: 30%;">
-                                <div class="account-balance">
-                                    <div class="label">Current Balance</div>
-                                    <div class="amount <?= $finalBalance < 0 ? 'balance-negative' : 'balance-positive' ?>">
-                                        <?= number_format(abs($finalBalance), 2) ?>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="account-info">
+                        <h3><?= htmlspecialchars($ledger['account_name']) ?></h3>
+                        <p><?= htmlspecialchars($ledger['account_type']) ?></p>
+                    </div>
                 </div>
 
                 <!-- Ledger Table -->
                 <table class="ledger-table">
                     <thead>
                         <tr>
-                            <th style="width: 12%;">Date</th>
-                            <th style="width: 38%;">Particulars</th>
-                            <th style="width: 16%;" class="text-right">Debit</th>
-                            <th style="width: 16%;" class="text-right">Credit</th>
-                            <th style="width: 18%;" class="text-right">Balance</th>
+                            <th style="width: 15%;">Date</th>
+                            <th style="width: 50%;">Particulars</th>
+                            <th style="width: 17.5%;" class="text-right">Debit</th>
+                            <th style="width: 17.5%;" class="text-right">Credit</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -318,9 +266,6 @@
                                 <td class="amount-cell">
                                     <?= $entry['credit'] > 0 ? number_format($entry['credit'], 2) : '0.00' ?>
                                 </td>
-                                <td class="amount-cell">
-                                    <?= number_format($entry['balance'], 2) ?>
-                                </td>
                             </tr>
                         <?php endforeach; ?>
 
@@ -334,9 +279,6 @@
                             </td>
                             <td class="amount-cell">
                                 <strong><?= number_format(array_sum(array_column($ledger['entries'], 'credit')), 2) ?></strong>
-                            </td>
-                            <td class="amount-cell">
-                                <strong><?= number_format($finalBalance, 2) ?></strong>
                             </td>
                         </tr>
                     </tbody>

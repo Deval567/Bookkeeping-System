@@ -5,7 +5,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['user_id']) || !isset($_SE
     header("Location: ../index.php");
     exit();
 }
-$title = "Trial Balance";
+$title = "Adjusted Trial Balance";
 include_once "../templates/header.php";
 include_once "../templates/sidebar.php";
 include_once "../templates/banner.php";
@@ -23,7 +23,7 @@ $trialBalance = $entry->getAllTrialBalance($month, $year);
     <div class="mb-4 flex justify-between items-center">
         <div>
             <h2 class="text-2xl font-semibold"><?= $title ?></h2>
-            <p class="text-gray-600">Summary of account balances.</p>
+            <p class="text-gray-600">Summary of adjusted trial balance.</p>
         </div>
         <!-- Success and Error Messages -->
         <?php if (isset($_SESSION['success_message'])): ?>
@@ -270,7 +270,7 @@ $trialBalance = $entry->getAllTrialBalance($month, $year);
                 </div>
 
                 <!-- Form (Hidden Inputs) -->
-                <form action="../controllers/trialbalance.controller.php" method="POST" target="_blank" class="px-6 pb-4">
+                <form action="../controllers/adtrialbalance.controller.php" method="POST" target="_blank" class="px-6 pb-4">
                     <input type="hidden" name="action" value="download_pdf">
                     <input type="hidden" name="month" value="<?= htmlspecialchars($month) ?>">
                     <input type="hidden" name="year" value="<?= htmlspecialchars($year) ?>">

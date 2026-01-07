@@ -84,7 +84,7 @@ switch ($action) {
         } else {
             $error = $deleted['error'] ?? 'unknown_error';
             if ($error === 'rule_in_use') {
-                $_SESSION['transactionrules_errors'] = ["Cannot delete <b>$ruleName</b> — it is currently in use."];
+                $_SESSION['transactionrules_errors'] = ["Cannot delete <b>$ruleName</b>  it is currently in use."];
             } else {
                 $_SESSION['transactionrules_errors'] = ["Failed to delete <b>$ruleName</b>. Please try again."];
             }
