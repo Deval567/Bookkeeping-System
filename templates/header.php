@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 
     <title><?php echo $title ?? "Bookkeeping System"; ?></title>
+    <link rel="shortcut icon" href="../images/logo.jpg" type="image/jpeg">
     <?php
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
