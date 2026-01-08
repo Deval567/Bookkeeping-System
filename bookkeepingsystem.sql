@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Nov 12, 2025 at 09:08 AM
+-- Generation Time: Jan 08, 2026 at 01:30 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,14 +20,12 @@ SET time_zone = "+00:00";
 --
 -- Database: `bookkeepingsystem`
 --
-CREATE DATABASE `bookkeepingsystem`;
 
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `chart_of_accounts`
 --
-
 
 CREATE TABLE `chart_of_accounts` (
   `id` int(11) NOT NULL,
@@ -260,7 +258,9 @@ INSERT INTO `transaction_rule_lines` (`id`, `rule_id`, `account_id`, `entry_type
 (59, 24, 35, 'debit'),
 (60, 24, 62, 'credit'),
 (61, 49, 63, 'debit'),
-(62, 49, 62, 'credit');
+(62, 49, 62, 'credit'),
+(83, 31, 17, 'debit'),
+(84, 31, 19, 'credit');
 
 -- --------------------------------------------------------
 
@@ -281,7 +281,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
 (2, 'Joshua', 'joshua', 'Admin'),
-(14, 'Testacc', 'Test123', 'Staff');
+(15, 'test231', 'test231', 'Staff');
 
 --
 -- Indexes for dumped tables
@@ -344,13 +344,13 @@ ALTER TABLE `chart_of_accounts`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=132;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `transaction_rules`
@@ -362,13 +362,13 @@ ALTER TABLE `transaction_rules`
 -- AUTO_INCREMENT for table `transaction_rule_lines`
 --
 ALTER TABLE `transaction_rule_lines`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
@@ -379,16 +379,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `journal_entries`
   ADD CONSTRAINT `fk_journal_rule_line` FOREIGN KEY (`rule_line_id`) REFERENCES `transaction_rule_lines` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_journal_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_rule_line_id` FOREIGN KEY (`rule_line_id`) REFERENCES `transaction_rule_lines` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `journal_entries_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_journal_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `transactions`
 --
 ALTER TABLE `transactions`
-  ADD CONSTRAINT `fk_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_transactions_rule` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transactions_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `transaction_rules_1` FOREIGN KEY (`rule_id`) REFERENCES `transaction_rules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
